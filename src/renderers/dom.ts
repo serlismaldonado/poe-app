@@ -19,7 +19,7 @@ export class DOMRenderer implements IRenderer {
     if (!this.editorEl) return;
 
     const html = this.renderLines(state);
-    this.editorEl.innerHTML = html;
+    this.editorEl.innerHTML = `<div class="content">${html}</div>`;
     this.updatePosition(state);
     this.updateStatus(state);
     this.scrollToVisibleCursor(state);
@@ -187,7 +187,10 @@ export class DOMRenderer implements IRenderer {
   private scrollToVisibleCursor(state: EditorState): void {
     if (!this.editorEl) return;
 
-    const lines = this.editorEl.querySelectorAll(".line");
+    const content = this.editorEl.querySelector(".content");
+    if (!content) return;
+
+    const lines = content.querySelectorAll(".line");
     if (lines[state.cursorLine]) {
       const line = lines[state.cursorLine] as HTMLElement;
       line.scrollIntoView({ behavior: "auto", block: "nearest" });
