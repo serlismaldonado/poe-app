@@ -38,7 +38,7 @@ export class LocalFileManager implements IFileManager {
 
   async getRecentFiles(): Promise<string[]> {
     try {
-      const stored = localStorage.getItem(`${this.positionsKey}:recent`);
+      const stored = localStorage.getItem(`poe:positions:recent`);
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
@@ -52,10 +52,10 @@ export class LocalFileManager implements IFileManager {
   ): Promise<void> {
     try {
       const positions = JSON.parse(
-        localStorage.getItem(this.positionsKey) || "{}"
+        localStorage.getItem("poe:positions") || "{}"
       );
       positions[path] = { line, col };
-      localStorage.setItem(this.positionsKey, JSON.stringify(positions));
+      localStorage.setItem("poe:positions", JSON.stringify(positions));
     } catch {}
   }
 
@@ -64,7 +64,7 @@ export class LocalFileManager implements IFileManager {
   ): Promise<{ line: number; col: number } | null> {
     try {
       const positions = JSON.parse(
-        localStorage.getItem(this.positionsKey) || "{}"
+        localStorage.getItem("poe:positions") || "{}"
       );
       return positions[path] || null;
     } catch {
@@ -74,8 +74,6 @@ export class LocalFileManager implements IFileManager {
 }
 
 export class TauriFileManager implements IFileManager {
-  private positionsKey = "poe:positions";
-
   async load(path: string): Promise<string> {
     try {
       const { readTextFile } = await import("@tauri-apps/api/fs");
@@ -96,7 +94,7 @@ export class TauriFileManager implements IFileManager {
 
   async getRecentFiles(): Promise<string[]> {
     try {
-      const stored = localStorage.getItem(`${this.positionsKey}:recent`);
+      const stored = localStorage.getItem("poe:positions:recent");
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
@@ -109,24 +107,43 @@ export class TauriFileManager implements IFileManager {
     col: number
   ): Promise<void> {
     try {
-      const positions = JSON.parse(
-        localStorage.getItem(this.positionsKey) || "{}"
-      );
-      positions[path] = { line, col };
-      localStorage.setItem(this.positionsKey, JSON.stringify(positions));
-    } catch {}
+      const { invoke } = await import("@tauri-apps/api/tauri");
+      await invoke("save_cursor_position", { path, line, col });
+    } catch {
+      // Fallback to localStorage
+      try {
+        const positions = JSON.parse(
+          localStorage.getItem("poe:positions") || "{}"
+        );
+        positions[path] = { line, col };
+        localStorage.setItem("poe:positions", JSON.stringify(positions));
+      } catch {}
+    }
   }
 
   async getCursorPosition(
     path: string
   ): Promise<{ line: number; col: number } | null> {
     try {
-      const positions = JSON.parse(
-        localStorage.getItem(this.positionsKey) || "{}"
+      const { invoke } = await import("@tauri-apps/api/tauri");
+      const result = await invoke<[number, number] | null>(
+        "get_cursor_position",
+        { path }
       );
-      return positions[path] || null;
-    } catch {
+      if (result) {
+        return { line: result[0], col: result[1] };
+      }
       return null;
+    } catch {
+      // Fallback to localStorage
+      try {
+        const positions = JSON.parse(
+          localStorage.getItem("poe:positions") || "{}"
+        );
+        return positions[path] || null;
+      } catch {
+        return null;
+      }
     }
   }
 }

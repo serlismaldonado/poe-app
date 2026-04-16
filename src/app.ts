@@ -2,32 +2,39 @@ import { Editor } from "./editor";
 import { DOMRenderer } from "./renderers/dom";
 import { InputHandler } from "./input";
 import { SoundManager } from "./sound";
-import { loadConfig } from "./settings";
-import { TauriFileManager } from "./file-manager";
+import { loadConfig, saveConfig } from "./settings";
+import { TauriFileManager, LocalFileManager, IFileManager } from "./file-manager";
+import { detectTauri } from "./lib/tauri-detect";
 
 export class App {
   private root: HTMLElement | null = null;
   private editor: Editor | null = null;
   private inputHandler: InputHandler | null = null;
   private soundManager: SoundManager;
-  private fileManager: TauriFileManager;
+  private fileManager: IFileManager;
+  private currentFile: string | null = null;
 
   constructor() {
     this.root = document.getElementById("app");
     this.soundManager = new SoundManager();
-    this.fileManager = new TauriFileManager();
+    this.fileManager = new LocalFileManager();
   }
 
   async init() {
     if (!this.root) return;
+
+    const isTauri = await detectTauri();
+    if (isTauri) {
+      this.fileManager = new TauriFileManager();
+    }
 
     this.root.innerHTML = `
       <div class="editor-container">
         <div class="editor" id="editor"></div>
         <div class="status-bar">
           <div class="status-left">
-            <span class="status-item">Poe 1.0.0</span>
-            <span class="status-item" id="filename">Untitled</span>
+            <span class="status-item">Poe</span>
+            <span class="status-item" id="filename">Welcome.md</span>
           </div>
           <div class="status-right">
             <span class="status-item" id="position">Ln 1, Col 1</span>
@@ -45,7 +52,18 @@ export class App {
     this.editor.setContent([
       "# Welcome to Poe",
       "",
-      "Start typing to edit. Press Ctrl+S to save.",
+      "A minimal markdown editor for focused writing.",
+      "",
+      "## Keyboard Shortcuts",
+      "",
+      "- Ctrl+S: Save file",
+      "- Ctrl+Z: Undo",
+      "- Ctrl+Y: Redo",
+      "- Ctrl+A: Select all",
+      "- Ctrl+D: Duplicate line",
+      "- Ctrl+K: Kill line",
+      "- Alt+↑/↓: Move line up/down",
+      "- Tab/Shift+Tab: Indent/dedent",
     ]);
 
     this.inputHandler = new InputHandler(this.editor);
@@ -54,17 +72,34 @@ export class App {
 
     this.soundManager.enable(cfg.sound);
 
-    console.log("App initialized");
+    console.log("App initialized", { isTauri });
   }
 
   private async handleSave(): Promise<void> {
     if (!this.editor) return;
+
     const statusEl = document.getElementById("status");
     if (statusEl) {
       statusEl.textContent = "Saving...";
-      setTimeout(() => {
-        statusEl.textContent = "";
-      }, 500);
+    }
+
+    const content = this.editor.getContent();
+    
+    if (this.currentFile) {
+      try {
+        await this.fileManager.save(this.currentFile, content);
+        if (statusEl) {
+          statusEl.textContent = "Saved";
+          setTimeout(() => {
+            if (statusEl) statusEl.textContent = "";
+          }, 1000);
+        }
+      } catch (error) {
+        console.error("Save failed:", error);
+        if (statusEl) {
+          statusEl.textContent = "Save failed";
+        }
+      }
     }
   }
 }
