@@ -110,10 +110,9 @@ body {
   max-width: 100%;
 }
 
-/* Novel indent element */
-.editor .content.mode-novel .novel-indent {
-  display: inline-block;
-  width: 2em;
+/* Indent for continuation paragraphs (not first line, not empty, not active) */
+.editor .content.mode-novel .line:not(.paragraph-start):not(.empty-line):not(.active) {
+  padding-left: 2em;
 }
 
 /* Chapter headings in novel mode */

@@ -66,14 +66,7 @@ export class DOMRenderer implements IRenderer {
 
         const lineClass = `line${isCurrentLine ? " active" : ""}${elementType}${novelClass}`;
         const content = this.renderLine(line, lineNum, state, mode);
-
-        // Add visual indent for non-paragraph-start lines in novel mode
-        let indent = "";
-        if (mode === "novel" && !isCurrentLine && novelClass === "" && line.trim() !== "") {
-          indent = '<span class="novel-indent"></span>';
-        }
-
-        return `<div class="${lineClass}" data-line="${lineNum}">${indent}${content}</div>`;
+        return `<div class="${lineClass}" data-line="${lineNum}">${content}</div>`;
       })
       .join("");
   }
@@ -100,18 +93,24 @@ export class DOMRenderer implements IRenderer {
     state: EditorState,
     mode: "markdown" | "screenplay" | "novel"
   ): string {
-    const tokens = highlightLine(line, mode);
+    const isCurrentLine = lineNum === state.cursorLine;
+    const tokens = highlightLine(line, mode, isCurrentLine);
     let html = "";
     let charOffset = 0;
-    const isCurrentLine = lineNum === state.cursorLine;
-    
+
     // Calcular indentación para screenplay
     const lineIndent = line.match(/^ */)?.[0].length || 0;
-    
+
     // Calcular límites de palabra actual para focus mode
     const wordBounds = isCurrentLine ? this.getWordBoundaries(line, state.cursorCol) : null;
-    
+
     for (const token of tokens) {
+      // Saltar tokens ocultos (marcadores en líneas no activas)
+      if (token.hidden) {
+        charOffset += token.text.length;
+        continue;
+      }
+
       for (let i = 0; i < token.text.length; i++) {
         const char = token.text[i];
         const col = charOffset + i;
@@ -124,7 +123,7 @@ export class DOMRenderer implements IRenderer {
         if (isCursor) className += " cursor";
         if (isSelected) className += " selected";
         if (isSearchMatch) className += " search-match";
-        
+
         // Marcar espacios de indentación en screenplay
         if (mode === "screenplay" && col < lineIndent && char === " ") {
           className += " indent-space";
@@ -264,22 +263,22 @@ export class DOMRenderer implements IRenderer {
 
   private getWordBoundaries(line: string, col: number): { start: number; end: number } | null {
     if (col < 0 || col > line.length) return null;
-    
+
     let start = col;
     let end = col;
-    
+
     // Si estamos en un caracter de palabra, expandir
     if (col < line.length && /\w/.test(line[col])) {
       while (start > 0 && /\w/.test(line[start - 1])) start--;
       while (end < line.length && /\w/.test(line[end])) end++;
-    } 
+    }
     // Si estamos justo después de una palabra
     else if (col > 0 && /\w/.test(line[col - 1])) {
       end = col;
       start = col - 1;
       while (start > 0 && /\w/.test(line[start - 1])) start--;
     }
-    
+
     return start < end ? { start, end } : null;
   }
 
