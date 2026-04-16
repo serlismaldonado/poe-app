@@ -2,9 +2,10 @@ import { Editor } from "./editor";
 import { DOMRenderer } from "./renderers/dom";
 import { InputHandler } from "./input";
 import { SoundManager } from "./sound";
-import { loadConfig } from "./settings";
+import { Config, loadConfig } from "./settings";
 import { detectTauri } from "./lib/tauri-detect";
 import { SearchBar } from "./ui/search-bar";
+import { SettingsPanel } from "./ui/settings-panel";
 import { openFileDialog, saveFileDialog, saveFile, getFileName } from "./file-ops";
 
 export class App {
@@ -13,8 +14,10 @@ export class App {
   private inputHandler: InputHandler | null = null;
   private soundManager: SoundManager;
   private searchBar: SearchBar | null = null;
+  private settingsPanel: SettingsPanel | null = null;
   private currentFile: string | null = null;
   private isTauri: boolean = false;
+  private config: Config | null = null;
 
   constructor() {
     this.root = document.getElementById("app");
@@ -44,6 +47,7 @@ export class App {
     `;
 
     const cfg = await loadConfig();
+    this.config = cfg;
     const renderer = new DOMRenderer();
     this.editor = new Editor(renderer);
     this.editor.setConfig(cfg);
@@ -68,19 +72,50 @@ export class App {
     const editorContainer = this.root.querySelector(".editor-container");
     if (editorContainer) {
       this.searchBar.create(editorContainer as HTMLElement);
+      
+      this.settingsPanel = new SettingsPanel(cfg);
+      this.settingsPanel.create(editorContainer as HTMLElement);
+      this.settingsPanel.setOnConfigChange((newCfg) => this.handleConfigChange(newCfg));
     }
 
     this.inputHandler = new InputHandler(this.editor);
     this.inputHandler.onSave = () => this.handleSave();
     this.inputHandler.onOpen = () => this.handleOpen();
     this.inputHandler.onSearch = () => this.searchBar?.toggle();
+    this.inputHandler.onSettings = () => this.settingsPanel?.toggle();
+    this.inputHandler.onKeyDown = (e) => this.handleGlobalKey(e);
     this.inputHandler.install();
 
     this.soundManager.enable(cfg.sound);
     this.soundManager.setVolume(cfg.soundVolume);
 
     this.updateFilename();
+    this.updateModeDisplay();
     console.log("App initialized", { isTauri: this.isTauri });
+  }
+
+  private handleGlobalKey(e: KeyboardEvent): boolean {
+    if (this.settingsPanel?.isOpen()) {
+      return this.settingsPanel.handleKey(e);
+    }
+    return false;
+  }
+
+  private handleConfigChange(newCfg: Config): void {
+    this.config = newCfg;
+    if (this.editor) {
+      this.editor.setConfig(newCfg);
+    }
+    this.soundManager.enable(newCfg.sound);
+    this.soundManager.setVolume(newCfg.soundVolume);
+    this.updateModeDisplay();
+  }
+
+  private updateModeDisplay(): void {
+    const modeEl = document.getElementById("mode");
+    if (modeEl && this.config) {
+      modeEl.textContent = this.config.mode.toUpperCase();
+    }
   }
 
   private updateFilename(): void {

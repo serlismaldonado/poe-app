@@ -74,6 +74,11 @@ export class InputHandler {
   }
 
   private handleKeyDown(e: KeyboardEvent): void {
+    // Let modal panels handle keys first
+    if (this.onKeyDown?.(e)) {
+      return;
+    }
+    
     if (e.ctrlKey || e.metaKey) {
       this.handleCtrlKey(e);
     } else if (e.altKey) {
@@ -145,6 +150,10 @@ export class InputHandler {
         e.preventDefault();
         this.onGoto?.();
         break;
+      case ",":
+        e.preventDefault();
+        this.onSettings?.();
+        break;
       case "M":
         e.preventDefault();
         this.editor.toggleMode();
@@ -186,6 +195,8 @@ export class InputHandler {
   onSave?: () => void;
   onOpen?: () => void;
   onSearch?: () => void;
+  onSettings?: () => void;
   onGoto?: () => void;
   onEscape?: () => void;
+  onKeyDown?: (e: KeyboardEvent) => boolean;
 }
