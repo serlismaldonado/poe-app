@@ -53,10 +53,16 @@ export class Editor {
     this.state.cfg = cfg;
   }
 
-  setContent(lines: string[]): void {
+  setContent(lines: string[], cursorAtEnd: boolean = true): void {
     this.state.lines = lines.length > 0 ? lines : [""];
-    this.state.cursorLine = 0;
-    this.state.cursorCol = 0;
+    if (cursorAtEnd) {
+      this.state.cursorLine = this.state.lines.length - 1;
+      this.state.cursorCol = this.state.lines[this.state.cursorLine].length;
+    } else {
+      this.state.cursorLine = 0;
+      this.state.cursorCol = 0;
+    }
+    this.state.selectionStart = null;
     this.render();
   }
 
