@@ -117,6 +117,10 @@ export class InputHandler {
         e.preventDefault();
         this.onSave?.();
         break;
+      case "O":
+        e.preventDefault();
+        this.onOpen?.();
+        break;
       case "D":
         e.preventDefault();
         this.editor.duplicateLine();
@@ -180,6 +184,7 @@ export class InputHandler {
   }
 
   onSave?: () => void;
+  onOpen?: () => void;
   onSearch?: () => void;
   onGoto?: () => void;
   onEscape?: () => void;
