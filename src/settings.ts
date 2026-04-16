@@ -1,3 +1,6 @@
+import { invoke } from "@tauri-apps/api/tauri";
+import { detectTauri } from "./lib/tauri-detect";
+
 export interface Config {
   wrapColumn: number;
   tabSize: number;
@@ -44,160 +47,54 @@ export const DEFAULT_CONFIG: Config = {
   accentColor: 100,
 };
 
-export interface SettingsDef {
-  key: keyof Config;
-  label: string;
-  type: "options" | "number" | "boolean";
-  options?: string[];
-  min?: number;
-  max?: number;
-  step?: number;
-  unit?: string;
-}
-
-export const SETTINGS_DEFS: SettingsDef[] = [
-  {
-    key: "mode",
-    label: "modo",
-    type: "options",
-    options: ["markdown", "screenplay"],
-  },
-  {
-    key: "cursorStyle",
-    label: "cursor",
-    type: "options",
-    options: ["bar", "underline", "block"],
-  },
-  {
-    key: "cursorBlinkMs",
-    label: "parpadeo",
-    type: "number",
-    min: 100,
-    max: 2000,
-    step: 100,
-    unit: "ms",
-  },
-  {
-    key: "wrapColumn",
-    label: "wrap columna",
-    type: "number",
-    min: 40,
-    max: 200,
-    step: 1,
-  },
-  {
-    key: "tabSize",
-    label: "tab",
-    type: "number",
-    min: 1,
-    max: 8,
-    step: 1,
-  },
-  {
-    key: "autosaveMs",
-    label: "autoguardado",
-    type: "number",
-    min: 100,
-    max: 5000,
-    step: 100,
-    unit: "ms",
-  },
-  {
-    key: "fadeGray",
-    label: "fade",
-    type: "number",
-    min: 232,
-    max: 255,
-    step: 1,
-  },
-  { key: "sound", label: "sonido", type: "boolean" },
-  {
-    key: "soundVolume",
-    label: "volumen",
-    type: "number",
-    min: 0,
-    max: 100,
-    step: 5,
-    unit: "%",
-  },
-  {
-    key: "h1Gray",
-    label: "# gris",
-    type: "number",
-    min: 232,
-    max: 255,
-    step: 1,
-  },
-  {
-    key: "h2Gray",
-    label: "## gris",
-    type: "number",
-    min: 232,
-    max: 255,
-    step: 1,
-  },
-  {
-    key: "h3Gray",
-    label: "### gris",
-    type: "number",
-    min: 232,
-    max: 255,
-    step: 1,
-  },
-  {
-    key: "boldGray",
-    label: "bold gris",
-    type: "number",
-    min: 232,
-    max: 255,
-    step: 1,
-  },
-  {
-    key: "italicGray",
-    label: "italic gris",
-    type: "number",
-    min: 232,
-    max: 255,
-    step: 1,
-  },
-  {
-    key: "searchBg",
-    label: "búsqueda fondo",
-    type: "number",
-    min: 0,
-    max: 255,
-    step: 1,
-  },
-  {
-    key: "characterColor",
-    label: "personaje color",
-    type: "number",
-    min: 0,
-    max: 255,
-    step: 1,
-  },
-  {
-    key: "accentColor",
-    label: "acento color",
-    type: "number",
-    min: 0,
-    max: 255,
-    step: 1,
-  },
-];
-
 export async function loadConfig(): Promise<Config> {
-  try {
-    const stored = localStorage.getItem("poe:config");
-    if (stored) {
-      return { ...DEFAULT_CONFIG, ...JSON.parse(stored) };
+  const isTauri = await detectTauri();
+  
+  if (isTauri) {
+    try {
+      const json = await invoke<string>("load_settings");
+      const saved = JSON.parse(json);
+      return { ...DEFAULT_CONFIG, ...saved };
+    } catch (e) {
+      console.error("Error loading settings:", e);
     }
-  } catch {}
+  } else {
+    try {
+      const saved = localStorage.getItem("poe:settings");
+      if (saved) {
+        return { ...DEFAULT_CONFIG, ...JSON.parse(saved) };
+      }
+    } catch {}
+  }
+  
   return { ...DEFAULT_CONFIG };
 }
 
-export async function saveConfig(cfg: Config): Promise<void> {
-  try {
-    localStorage.setItem("poe:config", JSON.stringify(cfg));
-  } catch {}
+export async function saveConfig(config: Config): Promise<void> {
+  const isTauri = await detectTauri();
+  
+  if (isTauri) {
+    try {
+      await invoke("save_settings", { json: JSON.stringify(config, null, 2) });
+    } catch (e) {
+      console.error("Error saving settings:", e);
+    }
+  } else {
+    try {
+      localStorage.setItem("poe:settings", JSON.stringify(config));
+    } catch {}
+  }
+}
+
+export async function getConfigPath(): Promise<string> {
+  const isTauri = await detectTauri();
+  
+  if (isTauri) {
+    try {
+      return await invoke<string>("get_config_path_cmd");
+    } catch {
+      return "~/.config/poe/settings.json";
+    }
+  }
+  return "localStorage";
 }

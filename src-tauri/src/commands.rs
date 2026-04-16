@@ -1,6 +1,37 @@
 use tauri::State;
 use crate::db::Database;
 use std::sync::Mutex;
+use std::fs;
+use std::path::PathBuf;
+
+fn get_config_path() -> PathBuf {
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    home.join(".config").join("poe").join("settings.json")
+}
+
+#[tauri::command]
+pub fn load_settings() -> Result<String, String> {
+    let path = get_config_path();
+    if path.exists() {
+        fs::read_to_string(&path).map_err(|e| e.to_string())
+    } else {
+        Ok("{}".to_string())
+    }
+}
+
+#[tauri::command]
+pub fn save_settings(json: String) -> Result<(), String> {
+    let path = get_config_path();
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    fs::write(&path, json).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_config_path_cmd() -> String {
+    get_config_path().to_string_lossy().to_string()
+}
 
 #[tauri::command]
 pub fn save_cursor_position(
