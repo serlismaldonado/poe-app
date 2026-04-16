@@ -193,3 +193,62 @@ body {
 .editor.focus-mode .line.active {
   opacity: 1;
 }
+
+/* Search bar */
+.search-bar {
+  background: var(--status-bg);
+  border-bottom: 1px solid var(--status-border);
+  padding: 8px 16px;
+}
+
+.search-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-input {
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--status-border);
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  border-radius: 4px;
+  outline: none;
+  min-width: 200px;
+}
+
+.search-input:focus {
+  border-color: var(--cursor);
+}
+
+.search-count {
+  font-size: 12px;
+  opacity: 0.7;
+  min-width: 80px;
+}
+
+.search-btn {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--status-border);
+  padding: 4px 10px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.search-btn:hover {
+  background: var(--status-border);
+}
+
+/* Search highlight in editor */
+.editor .char.search-match {
+  background: #5a4a00;
+  color: #fff;
+}
+
+.editor .char.search-match.current {
+  background: #8a7a00;
+}

@@ -1,16 +1,19 @@
 import { EditorState, EditorSnapshot, createState } from "./state";
 import { Config } from "./settings";
 import { IRenderer } from "./renderers/types";
+import { SearchEngine, SearchMatch } from "./search";
 
 const MAX_UNDO = 200;
 
 export class Editor {
   state: EditorState;
   renderer: IRenderer;
+  private searchEngine: SearchEngine;
 
   constructor(renderer: IRenderer) {
     this.state = createState();
     this.renderer = renderer;
+    this.searchEngine = new SearchEngine();
   }
 
   setConfig(cfg: Config): void {
@@ -480,5 +483,53 @@ export class Editor {
 
   private render(): void {
     this.renderer.render(this.state);
+  }
+
+  search(query: string): SearchMatch[] {
+    this.state.searchQuery = query;
+    this.state.searchMode = true;
+    const matches = this.searchEngine.search(this.state.lines, query);
+    this.state.searchMatches = matches;
+    this.state.searchIdx = 0;
+    this.render();
+    return matches;
+  }
+
+  nextSearchMatch(): void {
+    const match = this.searchEngine.nextMatch();
+    if (match) {
+      this.state.searchIdx++;
+      this.state.cursorLine = match.line;
+      this.state.cursorCol = match.col;
+      this.render();
+    }
+  }
+
+  prevSearchMatch(): void {
+    const match = this.searchEngine.prevMatch();
+    if (match) {
+      this.state.searchIdx--;
+      this.state.cursorLine = match.line;
+      this.state.cursorCol = match.col;
+      this.render();
+    }
+  }
+
+  clearSearch(): void {
+    this.state.searchMode = false;
+    this.state.searchQuery = "";
+    this.state.searchMatches = [];
+    this.state.searchIdx = 0;
+    this.render();
+  }
+
+  replaceAll(replacement: string): number {
+    if (!this.state.searchQuery) return 0;
+    this.pushUndo(this.snapshot());
+    const result = this.searchEngine.replace(this.state.lines, replacement);
+    this.state.lines = result.lines;
+    this.clearSearch();
+    this.render();
+    return result.count;
   }
 }

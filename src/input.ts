@@ -133,6 +133,14 @@ export class InputHandler {
         e.preventDefault();
         this.editor.moveLineDown();
         break;
+      case "F":
+        e.preventDefault();
+        this.onSearch?.();
+        break;
+      case "G":
+        e.preventDefault();
+        this.onGoto?.();
+        break;
     }
   }
 
@@ -152,4 +160,6 @@ export class InputHandler {
   }
 
   onSave?: () => void;
+  onSearch?: () => void;
+  onGoto?: () => void;
 }

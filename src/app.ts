@@ -5,6 +5,7 @@ import { SoundManager } from "./sound";
 import { loadConfig, saveConfig } from "./settings";
 import { TauriFileManager, LocalFileManager, IFileManager } from "./file-manager";
 import { detectTauri } from "./lib/tauri-detect";
+import { SearchBar } from "./ui/search-bar";
 
 export class App {
   private root: HTMLElement | null = null;
@@ -12,6 +13,7 @@ export class App {
   private inputHandler: InputHandler | null = null;
   private soundManager: SoundManager;
   private fileManager: IFileManager;
+  private searchBar: SearchBar | null = null;
   private currentFile: string | null = null;
 
   constructor() {
@@ -66,8 +68,15 @@ export class App {
       "- Tab/Shift+Tab: Indent/dedent",
     ]);
 
+    this.searchBar = new SearchBar(this.editor);
+    const editorContainer = this.root.querySelector(".editor-container");
+    if (editorContainer) {
+      this.searchBar.create(editorContainer as HTMLElement);
+    }
+
     this.inputHandler = new InputHandler(this.editor);
     this.inputHandler.onSave = () => this.handleSave();
+    this.inputHandler.onSearch = () => this.searchBar?.toggle();
     this.inputHandler.install();
 
     this.soundManager.enable(cfg.sound);
