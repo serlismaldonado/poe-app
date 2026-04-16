@@ -194,7 +194,7 @@ body {
 }
 
 .editor .char.token-link {
-  color: var(--link-color);
+  color: var(--cursor);
   text-decoration: underline;
 }
 

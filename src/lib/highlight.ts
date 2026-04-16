@@ -88,13 +88,33 @@ function highlightMarkdownLine(line: string): HighlightToken[] {
     return tokens;
   }
 
-  // Default: parse inline formatting
+  // Default: parse inline formatting with URLs
   if (line.length === 0) {
     tokens.push({ text: "", type: "text" });
     return tokens;
   }
 
-  tokens.push({ text: line, type: "text" });
+  // Detect URLs
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = urlRegex.exec(line)) !== null) {
+    if (match.index > lastIndex) {
+      tokens.push({ text: line.slice(lastIndex, match.index), type: "text" });
+    }
+    tokens.push({ text: match[1], type: "link" });
+    lastIndex = urlRegex.lastIndex;
+  }
+
+  if (lastIndex < line.length) {
+    tokens.push({ text: line.slice(lastIndex), type: "text" });
+  }
+
+  if (tokens.length === 0) {
+    tokens.push({ text: line, type: "text" });
+  }
+
   return tokens;
 }
 
