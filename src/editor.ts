@@ -2,6 +2,7 @@ import { EditorState, EditorSnapshot, createState } from "./state";
 import { Config } from "./settings";
 import { IRenderer } from "./renderers/types";
 import { SearchEngine, SearchMatch } from "./search";
+import { SoundManager } from "./sound";
 
 const MAX_UNDO = 200;
 
@@ -9,11 +10,35 @@ export class Editor {
   state: EditorState;
   renderer: IRenderer;
   private searchEngine: SearchEngine;
+  private soundManager: SoundManager | null = null;
+  private saveTimeout: ReturnType<typeof setTimeout> | null = null;
+  onAutoSave?: () => void;
 
   constructor(renderer: IRenderer) {
     this.state = createState();
     this.renderer = renderer;
     this.searchEngine = new SearchEngine();
+  }
+
+  setSoundManager(soundManager: SoundManager): void {
+    this.soundManager = soundManager;
+  }
+
+  private playSound(type: "key" | "space" | "enter" | "backspace"): void {
+    if (this.soundManager && this.state.cfg) {
+      this.soundManager.play(type, this.state.cfg as any);
+    }
+  }
+
+  private triggerAutoSave(): void {
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+    }
+    const delay = this.state.cfg.autosaveMs || 500;
+    this.saveTimeout = setTimeout(() => {
+      this.onAutoSave?.();
+      this.saveTimeout = null;
+    }, delay);
   }
 
   setConfig(cfg: Config): void {
@@ -245,6 +270,8 @@ export class Editor {
     this.state.cursorCol++;
 
     this.handleWordWrap();
+    this.playSound("key");
+    this.triggerAutoSave();
     this.render();
   }
 
@@ -280,6 +307,8 @@ export class Editor {
   handleBackspace(): void {
     if (this.state.selectionStart && this.state.selectionEnd) {
       this.deleteSelection();
+      this.playSound("backspace");
+      this.triggerAutoSave();
       return;
     }
 
@@ -302,12 +331,16 @@ export class Editor {
       this.state.cursorCol--;
     }
 
+    this.playSound("backspace");
+    this.triggerAutoSave();
     this.render();
   }
 
   handleDelete(): void {
     if (this.state.selectionStart && this.state.selectionEnd) {
       this.deleteSelection();
+      this.playSound("backspace");
+      this.triggerAutoSave();
       return;
     }
 
@@ -324,6 +357,8 @@ export class Editor {
       this.state.lines.splice(this.state.cursorLine + 1, 1);
     }
 
+    this.playSound("backspace");
+    this.triggerAutoSave();
     this.render();
   }
 
@@ -365,6 +400,8 @@ export class Editor {
     this.state.lines.splice(this.state.cursorLine + 1, 0, right);
     this.state.cursorLine++;
     this.state.cursorCol = 0;
+    this.playSound("enter");
+    this.triggerAutoSave();
     this.render();
   }
 

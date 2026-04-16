@@ -51,6 +51,10 @@ export class App {
     const renderer = new DOMRenderer();
     this.editor = new Editor(renderer);
     this.editor.setConfig(cfg);
+    this.editor.setSoundManager(this.soundManager);
+    this.editor.onAutoSave = () => this.handleAutoSave();
+
+    await this.soundManager.loadSounds();
     this.editor.setContent([
       "# Welcome to Poe",
       "",
@@ -80,6 +84,7 @@ export class App {
     this.inputHandler.install();
 
     this.soundManager.enable(cfg.sound);
+    this.soundManager.setVolume(cfg.soundVolume);
 
     console.log("App initialized", { isTauri });
   }
@@ -109,6 +114,36 @@ export class App {
           statusEl.textContent = "Save failed";
         }
       }
+    }
+  }
+
+  private async handleAutoSave(): Promise<void> {
+    if (!this.editor) return;
+
+    const statusEl = document.getElementById("status");
+    const content = this.editor.getContent();
+
+    if (this.currentFile) {
+      try {
+        await this.fileManager.save(this.currentFile, content);
+        if (statusEl) {
+          statusEl.textContent = "Auto-saved";
+          setTimeout(() => {
+            if (statusEl) statusEl.textContent = "";
+          }, 500);
+        }
+      } catch {}
+    } else {
+      // Sin archivo, guardar en localStorage como backup
+      try {
+        localStorage.setItem("poe:draft", content);
+        if (statusEl) {
+          statusEl.textContent = "Draft saved";
+          setTimeout(() => {
+            if (statusEl) statusEl.textContent = "";
+          }, 500);
+        }
+      } catch {}
     }
   }
 }
