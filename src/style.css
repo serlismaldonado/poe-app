@@ -14,6 +14,15 @@
   --status-border: #333;
   --line-height: 1.6;
   --font-size: 14px;
+  
+  /* Markdown syntax colors */
+  --heading-color: #81c784;
+  --bold-color: #ffb74d;
+  --italic-color: #64b5f6;
+  --code-color: #e57373;
+  --link-color: #81c784;
+  --list-color: #90caf9;
+  --blockquote-color: #9fa8da;
 }
 
 html,
@@ -80,6 +89,43 @@ body {
   color: var(--fg);
 }
 
+/* Syntax highlighting */
+.editor .char.token-heading {
+  color: var(--heading-color);
+  font-weight: bold;
+}
+
+.editor .char.token-bold {
+  color: var(--bold-color);
+  font-weight: bold;
+}
+
+.editor .char.token-italic {
+  color: var(--italic-color);
+  font-style: italic;
+}
+
+.editor .char.token-code {
+  color: var(--code-color);
+  background: rgba(255, 0, 0, 0.1);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.editor .char.token-link {
+  color: var(--link-color);
+  text-decoration: underline;
+}
+
+.editor .char.token-list {
+  color: var(--list-color);
+}
+
+.editor .char.token-blockquote {
+  color: var(--blockquote-color);
+  font-style: italic;
+}
+
 .status-bar {
   background: var(--status-bg);
   padding: 8px 16px;
@@ -136,4 +182,14 @@ body {
 
 .editor::-webkit-scrollbar-thumb:hover {
   background: #666;
+}
+
+/* Focus mode - fade non-active lines */
+.editor.focus-mode .line:not(.active) {
+  opacity: 0.4;
+  color: #666;
+}
+
+.editor.focus-mode .line.active {
+  opacity: 1;
 }

@@ -1,5 +1,6 @@
 import { EditorState } from "../state";
 import { IRenderer } from "./types";
+import { highlightMarkdownLine } from "../lib/markdown-highlight";
 
 export class DOMRenderer implements IRenderer {
   private editorEl: HTMLElement | null = null;
@@ -43,33 +44,38 @@ export class DOMRenderer implements IRenderer {
   }
 
   private highlightLine(line: string, lineNum: number, state: EditorState): string {
+    const tokens = highlightMarkdownLine(line);
     let html = "";
+    let charOffset = 0;
 
-    for (let col = 0; col < line.length; col++) {
-      const char = line[col];
-      const isCurrentLine = lineNum === state.cursorLine;
-      const isCursor = isCurrentLine && col === state.cursorCol;
-      const isSelected = this.isCharSelected(lineNum, col, state);
+    for (const token of tokens) {
+      for (let i = 0; i < token.text.length; i++) {
+        const char = token.text[i];
+        const col = charOffset + i;
+        const isCurrentLine = lineNum === state.cursorLine;
+        const isCursor = isCurrentLine && col === state.cursorCol;
+        const isSelected = this.isCharSelected(lineNum, col, state);
 
-      let className = "char";
-      if (isCursor) className += " cursor";
-      if (isSelected) className += " selected";
+        let className = `char token-${token.type}`;
+        if (isCursor) className += " cursor";
+        if (isSelected) className += " selected";
 
-      // Simple syntax highlighting for markdown
-      let displayChar = char;
-      if (char === " ") {
-        displayChar = "&nbsp;";
-      } else if (char === "\t") {
-        displayChar = "&nbsp;&nbsp;&nbsp;&nbsp;";
-      } else if (char === "<") {
-        displayChar = "&lt;";
-      } else if (char === ">") {
-        displayChar = "&gt;";
-      } else if (char === "&") {
-        displayChar = "&amp;";
+        let displayChar = char;
+        if (char === " ") {
+          displayChar = "&nbsp;";
+        } else if (char === "\t") {
+          displayChar = "&nbsp;&nbsp;&nbsp;&nbsp;";
+        } else if (char === "<") {
+          displayChar = "&lt;";
+        } else if (char === ">") {
+          displayChar = "&gt;";
+        } else if (char === "&") {
+          displayChar = "&amp;";
+        }
+
+        html += `<span class="${className}">${displayChar}</span>`;
       }
-
-      html += `<span class="${className}">${displayChar}</span>`;
+      charOffset += token.text.length;
     }
 
     // Ensure cursor shows at end of line
@@ -96,7 +102,8 @@ export class DOMRenderer implements IRenderer {
 
     const startLine = Math.min(start.line, end.line);
     const endLine = Math.max(start.line, end.line);
-    const startCol = start.line < end.line ? start.col : Math.min(start.col, end.col);
+    const startCol =
+      start.line < end.line ? start.col : Math.min(start.col, end.col);
     const endCol =
       start.line < end.line ? end.col : Math.max(start.col, end.col);
 
@@ -134,7 +141,7 @@ export class DOMRenderer implements IRenderer {
     const lines = this.editorEl.querySelectorAll(".line");
     if (lines[state.cursorLine]) {
       const line = lines[state.cursorLine] as HTMLElement;
-      line.scrollIntoView({ behavior: "smooth", block: "center" });
+      line.scrollIntoView({ behavior: "auto", block: "center" });
     }
   }
 }
