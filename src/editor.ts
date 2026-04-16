@@ -57,6 +57,7 @@ export class Editor {
     this.state.lines = lines.length > 0 ? lines : [""];
     this.state.cursorLine = 0;
     this.state.cursorCol = 0;
+    this.render();
   }
 
   getContent(): string {
