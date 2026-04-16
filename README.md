@@ -286,5 +286,3 @@ Made with ❤️ by [Serlis Maldonado](https://github.com/serlismaldonado)
 
 *"Simplicity is the ultimate sophistication." - Leonardo da Vinci*
 ```
-
-Ahora voy a actualizar el archivo README en el repositorio:
