@@ -35,6 +35,8 @@ export class SettingsPanel {
   private selectedIndex: number = 0;
   private isVisible: boolean = false;
   private onConfigChange?: (config: Config) => void;
+  private scrollOffset: number = 0;
+  private maxVisible: number = 12;
 
   constructor(config: Config) {
     this.config = { ...config };
@@ -48,6 +50,14 @@ export class SettingsPanel {
     this.element = document.createElement("div");
     this.element.className = "settings-panel";
     this.element.style.display = "none";
+    
+    // Click outside to close
+    this.element.addEventListener("click", (e) => {
+      if (e.target === this.element) {
+        this.hide();
+      }
+    });
+    
     parent.appendChild(this.element);
   }
 
@@ -70,7 +80,6 @@ export class SettingsPanel {
     if (!this.element) return;
     this.isVisible = false;
     this.element.style.display = "none";
-    saveConfig(this.config);
   }
 
   isOpen(): boolean {
@@ -89,12 +98,14 @@ export class SettingsPanel {
       case "ArrowUp":
         e.preventDefault();
         this.selectedIndex = Math.max(0, this.selectedIndex - 1);
+        this.adjustScroll();
         this.render();
         return true;
 
       case "ArrowDown":
         e.preventDefault();
         this.selectedIndex = Math.min(SETTINGS_DEFS.length - 1, this.selectedIndex + 1);
+        this.adjustScroll();
         this.render();
         return true;
 
@@ -118,6 +129,14 @@ export class SettingsPanel {
     return true;
   }
 
+  private adjustScroll(): void {
+    if (this.selectedIndex < this.scrollOffset) {
+      this.scrollOffset = this.selectedIndex;
+    } else if (this.selectedIndex >= this.scrollOffset + this.maxVisible) {
+      this.scrollOffset = this.selectedIndex - this.maxVisible + 1;
+    }
+  }
+
   private adjustValue(direction: number): void {
     const def = SETTINGS_DEFS[this.selectedIndex];
     const currentValue = this.config[def.key];
@@ -136,14 +155,29 @@ export class SettingsPanel {
       (this.config as any)[def.key] = newValue;
     }
 
-    this.render();
+    // Auto-save and notify
+    saveConfig(this.config);
     this.onConfigChange?.(this.config);
+    this.render();
+  }
+
+  private handleRowClick(index: number): void {
+    this.selectedIndex = index;
+    this.render();
+  }
+
+  private handleArrowClick(index: number, direction: number): void {
+    this.selectedIndex = index;
+    this.adjustValue(direction);
   }
 
   private render(): void {
     if (!this.element) return;
 
-    const rows = SETTINGS_DEFS.map((def, idx) => {
+    const visibleDefs = SETTINGS_DEFS.slice(this.scrollOffset, this.scrollOffset + this.maxVisible);
+
+    const rows = visibleDefs.map((def, visibleIdx) => {
+      const idx = visibleIdx + this.scrollOffset;
       const isSelected = idx === this.selectedIndex;
       const value = this.config[def.key];
       
@@ -156,22 +190,51 @@ export class SettingsPanel {
         valueStr = String(value);
       }
 
-      const valueDisplay = isSelected ? `< ${valueStr} >` : valueStr;
-
       return `
-        <div class="settings-row${isSelected ? " selected" : ""}">
+        <div class="settings-row${isSelected ? " selected" : ""}" data-index="${idx}">
           <span class="settings-label">${def.label}</span>
-          <span class="settings-value">${valueDisplay}</span>
+          <div class="settings-controls">
+            <button class="settings-arrow" data-index="${idx}" data-dir="-1">&lt;</button>
+            <span class="settings-value">${valueStr}</span>
+            <button class="settings-arrow" data-index="${idx}" data-dir="1">&gt;</button>
+          </div>
         </div>
       `;
     }).join("");
+
+    const scrollIndicator = SETTINGS_DEFS.length > this.maxVisible 
+      ? `<div class="settings-scroll-hint">${this.scrollOffset + 1}-${Math.min(this.scrollOffset + this.maxVisible, SETTINGS_DEFS.length)} / ${SETTINGS_DEFS.length}</div>`
+      : "";
 
     this.element.innerHTML = `
       <div class="settings-content">
         <div class="settings-header">configuracion</div>
         <div class="settings-rows">${rows}</div>
-        <div class="settings-footer">↑↓ navegar  ←→ cambiar  Enter cerrar</div>
+        <div class="settings-footer">
+          ${scrollIndicator}
+          <span>click o ←→ cambiar | ↑↓ navegar | Esc cerrar</span>
+        </div>
       </div>
     `;
+
+    // Add click handlers
+    this.element.querySelectorAll(".settings-row").forEach((row) => {
+      row.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        if (!target.classList.contains("settings-arrow")) {
+          const index = parseInt(row.getAttribute("data-index") || "0");
+          this.handleRowClick(index);
+        }
+      });
+    });
+
+    this.element.querySelectorAll(".settings-arrow").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const index = parseInt(btn.getAttribute("data-index") || "0");
+        const dir = parseInt(btn.getAttribute("data-dir") || "1");
+        this.handleArrowClick(index, dir);
+      });
+    });
   }
 }

@@ -412,8 +412,14 @@ body {
 .settings-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 8px 16px;
   color: #888;
+  cursor: pointer;
+}
+
+.settings-row:hover {
+  background: #222;
 }
 
 .settings-row.selected {
@@ -429,9 +435,38 @@ body {
   min-width: 120px;
 }
 
+.settings-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-arrow {
+  background: transparent;
+  border: 1px solid #444;
+  color: #888;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.settings-arrow:hover {
+  background: #333;
+  color: #fff;
+}
+
+.settings-row.selected .settings-arrow {
+  border-color: var(--cursor);
+  color: var(--cursor);
+}
+
 .settings-value {
   color: #aaa;
   font-family: monospace;
+  min-width: 80px;
+  text-align: center;
 }
 
 .settings-footer {
@@ -439,4 +474,11 @@ body {
   color: #666;
   font-size: 12px;
   border-top: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.settings-scroll-hint {
+  color: #555;
 }
