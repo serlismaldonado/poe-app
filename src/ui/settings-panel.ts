@@ -36,10 +36,16 @@ export class SettingsPanel {
   private isVisible: boolean = false;
   private onConfigChange?: (config: Config) => void;
   private scrollOffset: number = 0;
-  private maxVisible: number = 12;
 
   constructor(config: Config) {
     this.config = { ...config };
+  }
+
+  private getMaxVisible(): number {
+    const rowHeight = 40;
+    const headerFooter = 100;
+    const available = window.innerHeight - headerFooter;
+    return Math.max(4, Math.floor(available / rowHeight));
   }
 
   setOnConfigChange(callback: (config: Config) => void): void {
@@ -55,6 +61,14 @@ export class SettingsPanel {
     this.element.addEventListener("click", (e) => {
       if (e.target === this.element) {
         this.hide();
+      }
+    });
+    
+    // Re-render on resize
+    window.addEventListener("resize", () => {
+      if (this.isVisible) {
+        this.adjustScroll();
+        this.render();
       }
     });
     
@@ -130,10 +144,11 @@ export class SettingsPanel {
   }
 
   private adjustScroll(): void {
+    const maxVisible = this.getMaxVisible();
     if (this.selectedIndex < this.scrollOffset) {
       this.scrollOffset = this.selectedIndex;
-    } else if (this.selectedIndex >= this.scrollOffset + this.maxVisible) {
-      this.scrollOffset = this.selectedIndex - this.maxVisible + 1;
+    } else if (this.selectedIndex >= this.scrollOffset + maxVisible) {
+      this.scrollOffset = this.selectedIndex - maxVisible + 1;
     }
   }
 
@@ -174,7 +189,8 @@ export class SettingsPanel {
   private render(): void {
     if (!this.element) return;
 
-    const visibleDefs = SETTINGS_DEFS.slice(this.scrollOffset, this.scrollOffset + this.maxVisible);
+    const maxVisible = this.getMaxVisible();
+    const visibleDefs = SETTINGS_DEFS.slice(this.scrollOffset, this.scrollOffset + maxVisible);
 
     const rows = visibleDefs.map((def, visibleIdx) => {
       const idx = visibleIdx + this.scrollOffset;
@@ -202,8 +218,8 @@ export class SettingsPanel {
       `;
     }).join("");
 
-    const scrollIndicator = SETTINGS_DEFS.length > this.maxVisible 
-      ? `<div class="settings-scroll-hint">${this.scrollOffset + 1}-${Math.min(this.scrollOffset + this.maxVisible, SETTINGS_DEFS.length)} / ${SETTINGS_DEFS.length}</div>`
+    const scrollIndicator = SETTINGS_DEFS.length > maxVisible 
+      ? `<div class="settings-scroll-hint">${this.scrollOffset + 1}-${Math.min(this.scrollOffset + maxVisible, SETTINGS_DEFS.length)} / ${SETTINGS_DEFS.length}</div>`
       : "";
 
     this.element.innerHTML = `
