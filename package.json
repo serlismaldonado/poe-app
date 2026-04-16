@@ -8,6 +8,17 @@
     "build:ui": "vite build",
     "dev": "tauri dev",
     "build": "npm run build:ui && tauri build",
+    "build:macos": "npm run build:ui && tauri build --target aarch64-apple-darwin",
+    "build:windows": "npm run build:ui && tauri build --target x86_64-pc-windows-msvc",
+    "build:linux": "npm run build:ui && tauri build --target x86_64-unknown-linux-gnu",
+    "build:all": "npm run build:ui && npm run build:macos && echo 'Para Windows y Linux necesitas cross-compilation o CI/CD'",
+    "package": "npm run build && node scripts/package.js",
+    "distribute": "node scripts/distribute.js",
+    "distribute:clean": "node scripts/distribute.js clean",
+    "distribute:build": "node scripts/distribute.js build",
+    "distribute:package": "node scripts/distribute.js package",
+    "dist": "npm run distribute",
+    "clean": "rm -rf dist src-tauri/target/release/bundle releases",
     "tauri": "tauri"
   },
   "devDependencies": {

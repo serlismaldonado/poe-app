@@ -1,9 +1,11 @@
 {
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "build": {
     "beforeDevCommand": "npm run dev:ui",
     "beforeBuildCommand": "npm run build:ui",
     "devPath": "http://localhost:5173",
-    "distDir": "../dist"
+    "distDir": "../dist",
+    "withGlobalTauri": false
   },
   "package": {
     "productName": "Poe",
@@ -41,10 +43,37 @@
         "icons/icon.ico"
       ],
       "identifier": "com.serlismaldonado.poe",
-      "targets": "all"
+      "targets": ["app", "dmg", "updater"],
+      "resources": [],
+      "externalBin": [],
+      "copyright": "© 2024 Serlis Maldonado. Todos los derechos reservados.",
+      "category": "DeveloperTool",
+      "shortDescription": "Editor minimalista de markdown",
+      "longDescription": "Poe es un editor de markdown minimalista para escritorio construido con Tauri. Ofrece una experiencia de edición limpia y rápida con persistencia de datos local.",
+      "deb": {
+        "depends": []
+      },
+      "macOS": {
+        "frameworks": [],
+        "minimumSystemVersion": "10.13",
+        "exceptionDomain": "",
+        "signingIdentity": null,
+        "entitlements": null
+      },
+      "windows": {
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": ""
+      }
     },
     "security": {
       "csp": null
+    },
+    "updater": {
+      "active": false,
+      "endpoints": [],
+      "dialog": true,
+      "pubkey": ""
     },
     "windows": [
       {
@@ -54,7 +83,11 @@
         "title": "Poe",
         "width": 900,
         "minWidth": 600,
-        "minHeight": 400
+        "minHeight": 400,
+        "center": true,
+        "decorations": true,
+        "alwaysOnTop": false,
+        "skipTaskbar": false
       }
     ]
   }
