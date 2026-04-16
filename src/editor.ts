@@ -70,21 +70,27 @@ export class Editor {
     return this.state.lines.join("\n");
   }
 
+  private mouseRenderPending: boolean = false;
+
   handleMouseDown(line: number, col: number): void {
     this.state.cursorLine = Math.min(line, this.state.lines.length - 1);
     this.state.cursorCol = Math.min(col, this.state.lines[this.state.cursorLine].length);
     this.state.selectionStart = { line: this.state.cursorLine, col: this.state.cursorCol };
-    this.render();
+    this.scheduleMouseRender();
   }
 
   handleMouseMove(line: number, col: number): void {
-    this.state.cursorLine = Math.min(line, this.state.lines.length - 1);
-    this.state.cursorCol = Math.min(col, this.state.lines[this.state.cursorLine].length);
-    this.render();
+    const newLine = Math.min(line, this.state.lines.length - 1);
+    const newCol = Math.min(col, this.state.lines[newLine].length);
+    
+    if (newLine !== this.state.cursorLine || newCol !== this.state.cursorCol) {
+      this.state.cursorLine = newLine;
+      this.state.cursorCol = newCol;
+      this.scheduleMouseRender();
+    }
   }
 
   handleMouseUp(): void {
-    // If selection start equals cursor position, clear selection
     if (this.state.selectionStart) {
       if (this.state.selectionStart.line === this.state.cursorLine &&
           this.state.selectionStart.col === this.state.cursorCol) {
@@ -92,6 +98,15 @@ export class Editor {
       }
     }
     this.render();
+  }
+
+  private scheduleMouseRender(): void {
+    if (this.mouseRenderPending) return;
+    this.mouseRenderPending = true;
+    requestAnimationFrame(() => {
+      this.mouseRenderPending = false;
+      this.render();
+    });
   }
 
   getMode(): string {

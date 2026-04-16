@@ -77,6 +77,7 @@ body {
   flex-direction: column;
   cursor: text;
   user-select: none;
+  contain: content;
   align-items: center;
 }
 
@@ -84,6 +85,7 @@ body {
   width: 100%;
   max-width: 80ch;
   padding: 0 24px;
+  contain: layout style;
 }
 
 /* Markdown mode - modern monospace font */
