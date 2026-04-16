@@ -20,7 +20,7 @@ export interface EditorState {
 
   searchMode: boolean;
   searchQuery: string;
-  searchMatches: Array<{ line: number; col: number }>;
+  searchMatches: Array<{ line: number; col: number; length?: number }>;
   searchIdx: number;
 
   settingsMode: boolean;
