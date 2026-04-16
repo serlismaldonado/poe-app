@@ -20,8 +20,9 @@ export class DOMRenderer implements IRenderer {
   render(state: EditorState): void {
     if (!this.editorEl) return;
 
+    const mode = state.cfg.mode || "markdown";
     const html = this.renderLines(state);
-    this.editorEl.innerHTML = `<div class="content">${html}</div>`;
+    this.editorEl.innerHTML = `<div class="content mode-${mode}">${html}</div>`;
     this.updatePosition(state);
     this.updateStatus(state);
     this.scrollToVisibleCursor(state);
