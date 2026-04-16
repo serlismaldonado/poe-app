@@ -66,7 +66,14 @@ export class DOMRenderer implements IRenderer {
         
         const lineClass = `line${isCurrentLine ? " active" : ""}${elementType}${novelClass}`;
         const content = this.renderLine(line, lineNum, state, mode);
-        return `<div class="${lineClass}" data-line="${lineNum}">${content}</div>`;
+        
+        // Add visual indent for non-paragraph-start lines in novel mode
+        let indent = "";
+        if (mode === "novel" && !isCurrentLine && novelClass === "" && line.trim() !== "") {
+          indent = '<span class="novel-indent"></span>';
+        }
+        
+        return `<div class="${lineClass}" data-line="${lineNum}">${indent}${content}</div>`;
       })
       .join("");
   }

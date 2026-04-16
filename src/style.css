@@ -110,15 +110,10 @@ body {
   max-width: 100%;
 }
 
-/* No indent for: empty lines, paragraph starts, chapters */
-.editor .content.mode-novel .line.empty-line,
-.editor .content.mode-novel .line.paragraph-start {
-  text-indent: 0;
-}
-
-/* Regular paragraph lines get indent */
-.editor .content.mode-novel .line:not(.empty-line):not(.paragraph-start):not(.active) {
-  text-indent: 2em;
+/* Novel indent element */
+.editor .content.mode-novel .novel-indent {
+  display: inline-block;
+  width: 2em;
 }
 
 /* Chapter headings in novel mode */
