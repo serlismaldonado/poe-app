@@ -53,8 +53,6 @@ export class App {
     this.editor.setConfig(cfg);
     this.editor.setSoundManager(this.soundManager);
     this.editor.onAutoSave = () => this.handleAutoSave();
-
-    await this.soundManager.loadSounds();
     this.editor.setContent([
       "# Welcome to Poe",
       "",

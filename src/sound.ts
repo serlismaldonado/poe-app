@@ -9,23 +9,46 @@ export class SoundManager {
   private keyIdx: number = 0;
   private audioBuffers: Map<string, AudioBuffer> = new Map();
   private soundsLoaded: boolean = false;
+  private loadingPromise: Promise<void> | null = null;
 
   constructor() {
-    this.initContext();
+    this.initOnInteraction();
   }
 
-  private initContext(): void {
-    try {
-      const AudioContextClass =
-        (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (AudioContextClass) {
-        this.audioContext = new AudioContextClass();
+  private initOnInteraction(): void {
+    const initAudio = async () => {
+      if (this.audioContext) return;
+      
+      try {
+        const AudioContextClass =
+          (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (AudioContextClass) {
+          this.audioContext = new AudioContextClass();
+          await this.audioContext.resume();
+          console.log("AudioContext initialized");
+          await this.loadSounds();
+        }
+      } catch (e) {
+        console.error("AudioContext init failed:", e);
       }
-    } catch {}
+
+      document.removeEventListener("click", initAudio);
+      document.removeEventListener("keydown", initAudio);
+    };
+
+    document.addEventListener("click", initAudio, { once: true });
+    document.addEventListener("keydown", initAudio, { once: true });
   }
 
   async loadSounds(): Promise<void> {
-    if (!this.audioContext || this.soundsLoaded) return;
+    if (!this.audioContext || this.soundsLoaded || this.loadingPromise) return;
+
+    this.loadingPromise = this._loadSoundsInternal();
+    await this.loadingPromise;
+  }
+
+  private async _loadSoundsInternal(): Promise<void> {
+    if (!this.audioContext) return;
 
     const soundFiles = [
       "key0.mp3",
@@ -38,6 +61,8 @@ export class SoundManager {
       "backspace.mp3",
     ];
 
+    console.log("Loading sounds...");
+
     for (const file of soundFiles) {
       try {
         const response = await fetch(`/sounds/${file}`);
@@ -45,11 +70,17 @@ export class SoundManager {
           const arrayBuffer = await response.arrayBuffer();
           const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
           this.audioBuffers.set(file, audioBuffer);
+          console.log(`Loaded: ${file}`);
+        } else {
+          console.warn(`Sound not found: ${file}`);
         }
-      } catch {}
+      } catch (e) {
+        console.warn(`Failed to load ${file}:`, e);
+      }
     }
 
     this.soundsLoaded = true;
+    console.log(`Sounds loaded: ${this.audioBuffers.size}/${soundFiles.length}`);
   }
 
   enable(enabled: boolean): void {
@@ -63,6 +94,11 @@ export class SoundManager {
   play(type: SoundType, cfg: Config): void {
     if (!this.enabled || !cfg.sound) return;
     this.volume = (cfg.soundVolume || 60) / 100;
+
+    // Resume context if suspended
+    if (this.audioContext?.state === "suspended") {
+      this.audioContext.resume();
+    }
 
     if (this.audioBuffers.size > 0) {
       this.playSample(type);
@@ -108,7 +144,9 @@ export class SoundManager {
       gain.gain.value = this.volume;
 
       source.start(0);
-    } catch {}
+    } catch (e) {
+      console.error("Play sample failed:", e);
+    }
   }
 
   private playSynth(type: SoundType): void {
@@ -153,6 +191,8 @@ export class SoundManager {
           osc.stop(now + 0.1);
           break;
       }
-    } catch {}
+    } catch (e) {
+      console.error("Synth failed:", e);
+    }
   }
 }
