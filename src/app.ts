@@ -7,6 +7,7 @@ import { detectTauri } from "./lib/tauri-detect";
 import { SearchBar } from "./ui/search-bar";
 import { SettingsPanel } from "./ui/settings-panel";
 import { openFileDialog, saveFileDialog, saveFile, getFileName } from "./file-ops";
+import { listen } from "@tauri-apps/api/event";
 
 export class App {
   private root: HTMLElement | null = null;
@@ -91,7 +92,19 @@ export class App {
 
     this.updateFilename();
     this.updateModeDisplay();
+    
+    if (this.isTauri) {
+      this.setupMenuListeners();
+    }
+    
     console.log("App initialized", { isTauri: this.isTauri });
+  }
+
+  private async setupMenuListeners(): Promise<void> {
+    await listen("menu-open", () => this.handleOpen());
+    await listen("menu-save", () => this.handleSave());
+    await listen("menu-save-as", () => this.handleSaveAs());
+    await listen("menu-settings", () => this.settingsPanel?.toggle());
   }
 
   private handleGlobalKey(e: KeyboardEvent): boolean {
@@ -184,6 +197,33 @@ export class App {
       a.download = "document.md";
       a.click();
       URL.revokeObjectURL(url);
+    }
+  }
+
+  private async handleSaveAs(): Promise<void> {
+    if (!this.editor || !this.isTauri) return;
+
+    const statusEl = document.getElementById("status");
+    const content = this.editor.getContent();
+
+    try {
+      if (statusEl) statusEl.textContent = "Saving...";
+      
+      // Force dialog by not passing current path
+      const path = await saveFileDialog(content, undefined);
+      if (path) {
+        this.currentFile = path;
+        this.updateFilename();
+        if (statusEl) {
+          statusEl.textContent = "Saved";
+          setTimeout(() => {
+            if (statusEl) statusEl.textContent = "";
+          }, 1000);
+        }
+      }
+    } catch (e) {
+      console.error("Save As failed:", e);
+      if (statusEl) statusEl.textContent = "Save failed";
     }
   }
 
