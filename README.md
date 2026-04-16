@@ -1,227 +1,290 @@
-# Poe App - Tauri Desktop Edition
+# Poe App - Minimalist Markdown Editor
 
-Minimalista editor de markdown para desktop con Tauri + SQLite.
+![Poe App Screenshot](https://via.placeholder.com/800x450/667eea/ffffff?text=Poe+App+-+Minimalist+Markdown+Editor)
 
-## Distribución
+A minimalist, fast, and beautiful markdown editor for desktop built with Tauri and TypeScript. Poe offers a distraction-free writing experience with local data persistence.
 
-Para generar instaladores que puedas compartir en tu sitio web:
+## ✨ Features
 
-### Build local (macOS)
+- **Minimalist Interface**: Clean, distraction-free editor focused on writing
+- **Markdown Support**: Full markdown syntax highlighting
+- **Local First**: All data stored locally with SQLite
+- **Cross-Platform**: Available for macOS, Windows, and Linux
+- **Keyboard Focused**: Extensive keyboard shortcuts for efficient editing
+- **Auto-Save**: Your work is automatically saved
+- **Undo/Redo**: Unlimited undo/redo history
+- **Sound Feedback**: Optional soundboard for typing feedback
+- **Cursor Persistence**: Remembers your cursor position between sessions
 
-```bash
-# Build para macOS (genera .app y .dmg)
-npm run build:macos
+## 🚀 Quick Start
 
-# Build para todas las plataformas (solo macOS funciona localmente)
-npm run build:all
+### Download & Install
 
-# Organizar archivos en carpeta releases/
-npm run package
-```
+Visit our [releases page](https://github.com/serlismaldonado/poe-app/releases) to download the latest version for your platform:
 
-Los instaladores se generan en:
-- `src-tauri/target/release/bundle/` - Archivos originales
-- `releases/` - Archivos organizados por plataforma
+- **macOS**: Download `.dmg` file (drag Poe.app to Applications)
+- **Windows**: Download `.msi` installer
+- **Linux**: Download `.deb`, `.rpm`, or `.AppImage`
 
-### CI/CD con GitHub Actions
-
-Para builds multiplataforma automáticos (macOS, Windows, Linux):
-1. Configura secrets en GitHub: `TAURI_PRIVATE_KEY` y `TAURI_KEY_PASSWORD` (opcional para firma de código)
-2. Crea un tag: `git tag v1.0.0 && git push --tags`
-3. GitHub Actions generará automáticamente los instaladores y los publicará en Releases
-
-### Firma de código (recomendado para distribución)
-
-Para macOS:
-```bash
-# Configurar identidad de firma en tauri.conf.json
-# "signingIdentity": "Developer ID Application: Tu Nombre (TEAMID)"
-```
-
-Para Windows:
-```bash
-# Configurar certificateThumbprint en tauri.conf.json
-```
-
-### Archivos generados
-
-- **macOS**: `.app` bundle y `.dmg` (disco de instalación)
-- **Windows**: `.msi` (Windows Installer) y `.exe` (ejecutable portable)
-- **Linux**: `.deb` (Debian/Ubuntu), `.rpm` (Fedora/RHEL), `.AppImage` (portable)
-
-### Gestión de versiones
+### From Source
 
 ```bash
-# Mostrar versión actual
-node scripts/version.js current
+# Clone the repository
+git clone https://github.com/serlismaldonado/poe-app.git
+cd poe-app
 
-# Establecer nueva versión
-node scripts/version.js set 1.0.1
-
-# Incrementar versión automáticamente
-node scripts/version.js patch  # 1.0.0 → 1.0.1
-node scripts/version.js minor  # 1.0.0 → 1.1.0
-node scripts/version.js major  # 1.0.0 → 2.0.0
-```
-
-## Estructura del Proyecto
-
-```
-poe-app/
-├── src/                  Frontend (TypeScript, Vite)
-│   ├── main.ts          Entrada
-│   ├── app.ts           App class
-│   ├── editor.ts        Lógica de edición
-│   ├── input.ts         Manejo de keyboard
-│   ├── sound.ts         Web Audio API
-│   ├── file-manager.ts  Abstracción FS
-│   ├── settings.ts      Configuración
-│   ├── state.ts         Estado global
-│   ├── renderers/       DOM renderer
-│   ├── lib/             Helpers
-│   └── style.css        Estilos
-├── src-tauri/           Backend Rust (Tauri)
-│   ├── src/
-│   │   ├── main.rs      Entrada Tauri
-│   │   ├── db.rs        SQLite
-│   │   └── commands.rs  Tauri commands
-│   └── Cargo.toml       Deps Rust
-├── dist/                Build output
-├── index.html           HTML principal
-├── tsconfig.json        Config TypeScript
-├── vite.config.ts       Config Vite
-└── tauri.conf.json      Config Tauri
-```
-
-## Instalación para Desarrollo
-
-```bash
+# Install dependencies
 npm install
-```
 
-## Desarrollo
-
-### Frontend solo (con Vite dev server)
-
-```bash
-npm run dev:ui
-```
-
-Abre http://localhost:5173
-
-### Desktop (con Tauri)
-
-Requiere Rust instalado. Después:
-
-```bash
+# Development (with hot reload)
 npm run dev
-```
 
-Abre automáticamente la app en una ventana de Tauri.
-
-## Build para Desarrollo
-
-```bash
+# Build for production
 npm run build
 ```
 
-Genera ejecutable en `src-tauri/target/release/` para tu sistema operativo.
+## 📦 Installation
 
-## Scripts Disponibles
+### macOS
+1. Download `Poe_*.dmg` from releases
+2. Open the DMG file
+3. Drag `Poe.app` to your Applications folder
+4. Launch from Applications or Spotlight
 
-| Comando | Descripción |
-|---|---|
-| `npm run dev:ui` | Desarrollo frontend solo |
-| `npm run dev` | Desarrollo completo con Tauri |
-| `npm run build:ui` | Build frontend |
-| `npm run build` | Build completo (desarrollo) |
-| `npm run build:macos` | Build para macOS |
-| `npm run build:windows` | Build para Windows (requiere cross-compilation) |
-| `npm run build:linux` | Build para Linux (requiere cross-compilation) |
-| `npm run build:all` | Build para todas las plataformas |
-| `npm run package` | Organizar archivos en releases/ |
-| `npm run dist` | Build y organización completa |
-| `npm run clean` | Limpiar archivos de build |
-| `npm run tauri` | Comandos Tauri CLI |
+### Windows
+1. Download `Poe_*.msi` from releases
+2. Run the installer
+3. Follow the installation wizard
+4. Launch from Start Menu
 
-## Arquitectura
+### Linux
+```bash
+# Debian/Ubuntu
+sudo dpkg -i poe_*.deb
+
+# Fedora/RHEL
+sudo rpm -i poe_*.rpm
+
+# AppImage (any distribution)
+chmod +x poe_*.AppImage
+./poe_*.AppImage
+```
+
+## 🎯 Usage
+
+### Basic Editing
+- Start typing to create markdown content
+- Use `#` for headers, `*` or `-` for lists
+- `**bold**` and `*italic*` formatting
+- `[links](url)` and `![images](url)`
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+S` / `Cmd+S` | Save |
+| `Ctrl+Z` / `Cmd+Z` | Undo |
+| `Ctrl+Y` / `Cmd+Y` | Redo |
+| `Ctrl+A` / `Cmd+A` | Select all |
+| `Ctrl+D` | Duplicate line |
+| `Ctrl+K` | Delete line |
+| `Alt+↑/↓` | Move line up/down |
+| `Tab` / `Shift+Tab` | Indent/outdent |
+| `Ctrl+F` | Find (coming soon) |
+| `Ctrl+H` | Replace (coming soon) |
+
+### File Management
+- **New File**: `Ctrl+N` / `Cmd+N`
+- **Open File**: `Ctrl+O` / `Cmd+O`
+- **Save As**: `Ctrl+Shift+S` / `Cmd+Shift+S`
+- **Recent Files**: Automatically tracked in SQLite
+
+## 🏗️ Architecture
+
+```
+poe-app/
+├── src/                    # Frontend (TypeScript + Vite)
+│   ├── main.ts            # Entry point
+│   ├── app.ts             # App class
+│   ├── editor.ts          # Editor logic
+│   ├── input.ts           # Keyboard handling
+│   ├── file-manager.ts    # File system abstraction
+│   ├── settings.ts        # Configuration
+│   ├── state.ts           # Global state
+│   ├── renderers/         # DOM renderer
+│   └── style.css          # Styles
+├── src-tauri/             # Backend (Rust + Tauri)
+│   ├── src/
+│   │   ├── main.rs        # Tauri entry
+│   │   ├── db.rs          # SQLite database
+│   │   └── commands.rs    # Tauri commands
+│   └── Cargo.toml         # Rust dependencies
+└── releases/              # Distribution files
+```
 
 ### Frontend
+- **TypeScript** with Vite for fast development
+- **Virtual DOM** for efficient rendering
+- **Web Audio API** for sound feedback
+- **Modular architecture** with clear separation of concerns
 
-- **Editor**: Clase `Editor` con lógica pura (sin UI)
-- **Renderer**: Interface `IRenderer` con implementación `DOMRenderer`
-- **Input**: Clase `InputHandler` que mapea eventos del teclado
-- **FileManager**: Interface `IFileManager` con implementaciones `LocalFileManager` y `TauriFileManager`
-- **Sound**: Síntesis de sonido con Web Audio API
+### Backend
+- **Rust** with Tauri for native performance
+- **SQLite** for local data persistence
+- **File system access** with proper sandboxing
+- **Cross-platform** system APIs
 
-### Backend (Rust)
+## 🔧 Development
 
-- **Database**: Módulo `db.rs` con SQLite
-  - Tabla `files` - Posiciones de cursor y metadata
-  - Tabla `recent_searches` - Historial de búsquedas
-  - Tabla `settings` - Configuración persistente
-- **Commands**: Módulo `commands.rs` expone funciones a JavaScript vía Tauri
+### Prerequisites
+- Node.js 18+ and npm
+- Rust and Cargo (for Tauri)
+- Git
 
-### State Management
+### Setup Development Environment
+```bash
+# Clone and install
+git clone https://github.com/serlismaldonado/poe-app.git
+cd poe-app
+npm install
 
-Estado global en `EditorState`:
-- Contenido (`lines`)
-- Cursor (`cursorLine`, `cursorCol`)
-- Selección
-- Undo/Redo stacks
-- Configuración
+# Start development server
+npm run dev:ui      # Frontend only (http://localhost:5173)
+npm run dev         # Full app with Tauri
+```
 
-## Shortcuts
+### Build Commands
+```bash
+# Build frontend only
+npm run build:ui
 
-| Atajo | Acción |
-|---|---|
-| `Ctrl+S` | Guardar |
-| `Ctrl+Z` | Deshacer |
-| `Ctrl+Y` | Rehacer |
-| `Ctrl+A` | Seleccionar todo |
-| `Ctrl+D` | Duplicar línea |
-| `Ctrl+K` | Borrar línea |
-| `Alt+↑↓` | Mover línea |
-| `Tab` / `Shift+Tab` | Indentar |
-| `↑↓←→` | Mover cursor |
-| `Shift+↑↓←→` | Seleccionar |
+# Build for current platform
+npm run build
 
-## Features
+# Build for specific platforms
+npm run build:macos
+npm run build:windows
+npm run build:linux
 
-- ✅ Editor minimalista
-- ✅ Syntax highlighting (markdown básico)
-- ✅ Undo/Redo (hasta 200 pasos)
-- ✅ Auto-save
-- ✅ Soundboard (optional)
-- ✅ Cursor position persistence (SQLite)
-- ✅ Desktop app (Tauri)
-- ✅ Sistema de distribución multiplataforma
-- ⏳ Búsqueda (en desarrollo)
-- ⏳ Temas (en desarrollo)
+# Create distribution packages
+npm run distribute
+```
 
-## Desarrollo
+### Adding Features
+1. Edit logic in `src/editor.ts`
+2. Add input handlers in `src/input.ts`
+3. Update renderer if needed in `src/renderers/`
+4. Add Tauri commands in `src-tauri/src/commands.rs`
 
-### Agregar features
+## 📁 Project Structure
 
-1. Editar lógica en `src/editor.ts`
-2. Agregar input handler en `src/input.ts`
-3. Actualizar renderer si es necesario
+### Key Files
+- `src/editor.ts` - Core editor logic (pure, no UI)
+- `src/renderers/dom-renderer.ts` - DOM-based rendering
+- `src/state.ts` - Global application state
+- `src-tauri/src/db.rs` - SQLite database operations
+- `tauri.conf.json` - Tauri configuration
 
-### Agregar comandos Tauri
+### Database Schema
+```sql
+-- Files table
+CREATE TABLE files (
+    id INTEGER PRIMARY KEY,
+    path TEXT UNIQUE,
+    content TEXT,
+    cursor_line INTEGER,
+    cursor_col INTEGER,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
 
-1. Editar `src-tauri/src/db.rs` o crear nuevo módulo
-2. Agregar comando en `src-tauri/src/commands.rs`
-3. Invocar desde frontend con `invoke()`
+-- Recent searches
+CREATE TABLE recent_searches (
+    id INTEGER PRIMARY KEY,
+    query TEXT,
+    timestamp TIMESTAMP
+);
 
-## CI/CD
+-- Settings
+CREATE TABLE settings (
+    key TEXT PRIMARY KEY,
+    value TEXT
+);
+```
 
-El proyecto incluye configuración para GitHub Actions en `.github/workflows/build.yml` que:
+## 🚢 Distribution
 
-1. Detecta tags (`v*`) automáticamente
-2. Build para macOS, Windows y Linux en paralelo
-3. Publica los instaladores en GitHub Releases
-4. Soporta builds manuales con `workflow_dispatch`
+### Automated Releases
+This project uses GitHub Actions for automated builds. When you create a git tag:
+```bash
+git tag v1.0.0
+git push --tags
+```
+The workflow automatically builds for all platforms and creates a GitHub release.
 
-## Licencia
+### Manual Distribution
+```bash
+# Build and organize distribution files
+npm run distribute
 
-MIT
+# Files will be organized in:
+# releases/macos/     # .dmg and .app
+# releases/windows/   # .msi and .exe  
+# releases/linux/     # .deb, .rpm, .AppImage
+```
+
+### Code Signing (Optional)
+For production distribution, configure code signing:
+1. Set `TAURI_PRIVATE_KEY` environment variable
+2. Configure `signingIdentity` in `tauri.conf.json` (macOS)
+3. Configure `certificateThumbprint` in `tauri.conf.json` (Windows)
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how to help:
+
+1. **Fork** the repository
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Commit your changes**: `git commit -m 'Add amazing feature'`
+4. **Push to the branch**: `git push origin feature/amazing-feature`
+5. **Open a Pull Request**
+
+### Development Guidelines
+- Follow TypeScript best practices
+- Write tests for new features
+- Update documentation
+- Keep the codebase minimal and focused
+
+### Roadmap
+- [ ] Search and replace functionality
+- [ ] Multiple themes (dark/light)
+- [ ] Export to PDF/HTML
+- [ ] Plugin system
+- [ ] Cloud sync (optional)
+- [ ] Collaborative editing
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Tauri](https://tauri.app/) for the amazing desktop app framework
+- [Vite](https://vitejs.dev/) for the fast build tool
+- [SQLite](https://sqlite.org/) for reliable local storage
+- All contributors and users of Poe App
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/serlismaldonado/poe-app/issues)
+- **Email**: contacto@serlismaldonado.com
+- **Website**: [serlismaldonado.com](https://serlismaldonado.com)
+
+---
+
+Made with ❤️ by [Serlis Maldonado](https://github.com/serlismaldonado)
+
+*"Simplicity is the ultimate sophistication." - Leonardo da Vinci*
+```
+
+Ahora voy a actualizar el archivo README en el repositorio:
