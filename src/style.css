@@ -167,6 +167,10 @@ body {
   color: var(--fade-color);
 }
 
+.editor .char.faded-soft {
+  opacity: 0.6;
+}
+
 .editor .char.search-match {
   background: #5a4a00;
   color: #fff;

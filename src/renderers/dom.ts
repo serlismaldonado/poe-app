@@ -43,12 +43,12 @@ export class DOMRenderer implements IRenderer {
 
   private renderLines(state: EditorState): string {
     const mode = (state.cfg.mode || "markdown") as "markdown" | "screenplay" | "novel";
-    
+
     return state.lines
       .map((line, lineNum) => {
         const isCurrentLine = lineNum === state.cursorLine;
         const elementType = mode === "screenplay" ? this.getLineElementType(line) : "";
-        
+
         // Novel mode: detect empty lines and paragraph starts
         let novelClass = "";
         if (mode === "novel") {
@@ -56,23 +56,23 @@ export class DOMRenderer implements IRenderer {
           const prevLineEmpty = lineNum > 0 && state.lines[lineNum - 1].trim() === "";
           const isFirstLine = lineNum === 0;
           const isChapter = /^(cap[ií]tulo|chapter|parte|part)\s+/i.test(line.trim());
-          
+
           if (isEmpty) {
             novelClass = " empty-line";
           } else if (isFirstLine || prevLineEmpty || isChapter) {
             novelClass = " paragraph-start";
           }
         }
-        
+
         const lineClass = `line${isCurrentLine ? " active" : ""}${elementType}${novelClass}`;
         const content = this.renderLine(line, lineNum, state, mode);
-        
+
         // Add visual indent for non-paragraph-start lines in novel mode
         let indent = "";
         if (mode === "novel" && !isCurrentLine && novelClass === "" && line.trim() !== "") {
           indent = '<span class="novel-indent"></span>';
         }
-        
+
         return `<div class="${lineClass}" data-line="${lineNum}">${indent}${content}</div>`;
       })
       .join("");
@@ -104,9 +104,12 @@ export class DOMRenderer implements IRenderer {
     let html = "";
     let charOffset = 0;
     const isCurrentLine = lineNum === state.cursorLine;
-
+    
     // Calcular indentación para screenplay
     const lineIndent = line.match(/^ */)?.[0].length || 0;
+    
+    // Calcular límites de palabra actual para focus mode
+    const wordBounds = isCurrentLine ? this.getWordBoundaries(line, state.cursorCol) : null;
     
     for (const token of tokens) {
       for (let i = 0; i < token.text.length; i++) {
@@ -115,6 +118,7 @@ export class DOMRenderer implements IRenderer {
         const isCursor = isCurrentLine && col === state.cursorCol;
         const isSelected = this.isCharSelected(lineNum, col, state);
         const isSearchMatch = this.isSearchMatch(lineNum, col, state);
+        const isInCurrentWord = wordBounds && col >= wordBounds.start && col < wordBounds.end;
 
         let className = `char token-${token.type}`;
         if (isCursor) className += " cursor";
@@ -126,13 +130,22 @@ export class DOMRenderer implements IRenderer {
           className += " indent-space";
         }
 
-        // Focus mode: fade non-active lines (but not scene headings/characters in screenplay)
-        if (!isCurrentLine && !state.selectionStart && mode === "screenplay") {
-          if (token.type !== "scene-heading" && token.type !== "character") {
-            className += " faded";
+        // Focus mode: fade based on word proximity
+        if (!state.selectionStart) {
+          if (mode === "screenplay") {
+            if (!isCurrentLine && token.type !== "scene-heading" && token.type !== "character") {
+              className += " faded";
+            } else if (isCurrentLine && !isInCurrentWord && !isCursor) {
+              className += " faded-soft";
+            }
+          } else {
+            // markdown and novel modes
+            if (!isCurrentLine) {
+              className += " faded";
+            } else if (!isInCurrentWord && !isCursor) {
+              className += " faded-soft";
+            }
           }
-        } else if (!isCurrentLine && !state.selectionStart && mode === "markdown") {
-          className += " faded";
         }
 
         html += `<span class="${className}">${this.escapeChar(char)}</span>`;
@@ -247,6 +260,27 @@ export class DOMRenderer implements IRenderer {
         this.statusEl.textContent = "Saving...";
       }
     }
+  }
+
+  private getWordBoundaries(line: string, col: number): { start: number; end: number } | null {
+    if (col < 0 || col > line.length) return null;
+    
+    let start = col;
+    let end = col;
+    
+    // Si estamos en un caracter de palabra, expandir
+    if (col < line.length && /\w/.test(line[col])) {
+      while (start > 0 && /\w/.test(line[start - 1])) start--;
+      while (end < line.length && /\w/.test(line[end])) end++;
+    } 
+    // Si estamos justo después de una palabra
+    else if (col > 0 && /\w/.test(line[col - 1])) {
+      end = col;
+      start = col - 1;
+      while (start > 0 && /\w/.test(line[start - 1])) start--;
+    }
+    
+    return start < end ? { start, end } : null;
   }
 
   private getScreenplayElement(state: EditorState): string {
