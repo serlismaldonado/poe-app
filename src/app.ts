@@ -35,13 +35,12 @@ export class App {
         <div class="editor" id="editor"></div>
         <div class="status-bar">
           <div class="status-left">
-            <span class="status-item">Poe</span>
-            <span class="status-item" id="filename">Welcome.md</span>
+            <span class="status-item" id="position">1:1</span>
+            <span class="status-item" id="stats">1L 0W</span>
+            <span class="status-item" id="status"></span>
           </div>
           <div class="status-right">
-            <span class="status-item" id="position">Ln 1, Col 1</span>
-            <span class="status-item" id="mode">Markdown</span>
-            <span class="status-item" id="status"></span>
+            <span class="status-item" id="mode">MARKDOWN</span>
           </div>
         </div>
       </div>

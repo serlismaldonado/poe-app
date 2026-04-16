@@ -7,12 +7,14 @@ export class DOMRenderer implements IRenderer {
   private positionEl: HTMLElement | null = null;
   private statusEl: HTMLElement | null = null;
   private modeEl: HTMLElement | null = null;
+  private statsEl: HTMLElement | null = null;
 
   constructor() {
     this.editorEl = document.getElementById("editor");
     this.positionEl = document.getElementById("position");
     this.statusEl = document.getElementById("status");
     this.modeEl = document.getElementById("mode");
+    this.statsEl = document.getElementById("stats");
   }
 
   render(state: EditorState): void {
@@ -167,14 +169,28 @@ export class DOMRenderer implements IRenderer {
     if (this.positionEl) {
       const line = state.cursorLine + 1;
       const col = state.cursorCol + 1;
-      this.positionEl.textContent = `Ln ${line}, Col ${col}`;
+      this.positionEl.textContent = `${line}:${col}`;
+    }
+
+    if (this.statsEl) {
+      const lines = state.lines.length;
+      const words = state.lines.join(" ").split(/\s+/).filter(Boolean).length;
+      this.statsEl.textContent = `${lines}L ${words}W`;
     }
   }
 
   private updateStatus(state: EditorState): void {
+    const mode = state.cfg.mode || "markdown";
+
     if (this.modeEl) {
-      const mode = (state.cfg.mode || "markdown").toUpperCase();
-      this.modeEl.textContent = mode;
+      if (mode === "screenplay") {
+        const element = this.getScreenplayElement(state);
+        this.modeEl.textContent = element;
+        this.modeEl.className = "status-item screenplay-element";
+      } else {
+        this.modeEl.textContent = mode.toUpperCase();
+        this.modeEl.className = "status-item";
+      }
     }
 
     if (this.statusEl) {
@@ -182,6 +198,23 @@ export class DOMRenderer implements IRenderer {
         this.statusEl.textContent = "Saving...";
       }
     }
+  }
+
+  private getScreenplayElement(state: EditorState): string {
+    const ln = state.lines[state.cursorLine] || "";
+    const ind = ln.match(/^ */)?.[0].length || 0;
+    const trimmed = ln.trimStart();
+
+    if (ind === 0 && /^(INT\.|EXT\.|INT\/EXT|I\/E)/i.test(trimmed)) {
+      return "ESCENA";
+    }
+    if (ind === 0 && /^(CUT TO:|FADE OUT|FADE IN|DISSOLVE TO|SMASH CUT)/i.test(trimmed)) {
+      return "TRANSICIÓN";
+    }
+    if (ind >= 20) return "PERSONAJE";
+    if (ind >= 14) return "PARÉNTESIS";
+    if (ind >= 8) return "DIÁLOGO";
+    return "ACCIÓN";
   }
 
   private scrollToVisibleCursor(state: EditorState): void {
