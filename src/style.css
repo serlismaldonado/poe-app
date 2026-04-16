@@ -75,6 +75,8 @@ body {
   word-wrap: break-word;
   display: flex;
   flex-direction: column;
+  cursor: text;
+  user-select: none;
   align-items: center;
 }
 

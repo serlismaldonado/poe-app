@@ -70,6 +70,30 @@ export class Editor {
     return this.state.lines.join("\n");
   }
 
+  handleMouseDown(line: number, col: number): void {
+    this.state.cursorLine = Math.min(line, this.state.lines.length - 1);
+    this.state.cursorCol = Math.min(col, this.state.lines[this.state.cursorLine].length);
+    this.state.selectionStart = { line: this.state.cursorLine, col: this.state.cursorCol };
+    this.render();
+  }
+
+  handleMouseMove(line: number, col: number): void {
+    this.state.cursorLine = Math.min(line, this.state.lines.length - 1);
+    this.state.cursorCol = Math.min(col, this.state.lines[this.state.cursorLine].length);
+    this.render();
+  }
+
+  handleMouseUp(): void {
+    // If selection start equals cursor position, clear selection
+    if (this.state.selectionStart) {
+      if (this.state.selectionStart.line === this.state.cursorLine &&
+          this.state.selectionStart.col === this.state.cursorCol) {
+        this.state.selectionStart = null;
+      }
+    }
+    this.render();
+  }
+
   getMode(): string {
     return this.state.cfg.mode || "markdown";
   }

@@ -57,6 +57,17 @@ export class App {
     this.editor.setSoundManager(this.soundManager);
     this.editor.onAutoSave = () => this.handleAutoSave();
     
+    renderer.setMouseCallback((line, col, type) => {
+      if (!this.editor) return;
+      if (type === "down") {
+        this.editor.handleMouseDown(line, col);
+      } else if (type === "move") {
+        this.editor.handleMouseMove(line, col);
+      } else if (type === "up") {
+        this.editor.handleMouseUp();
+      }
+    });
+    
     // Load draft if exists
     const draft = localStorage.getItem("poe:draft");
     if (draft) {

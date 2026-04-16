@@ -2,12 +2,18 @@ import { EditorState } from "../state";
 import { IRenderer } from "./types";
 import { highlightLine, TokenType } from "../lib/highlight";
 
+export interface MouseEventCallback {
+  (line: number, col: number, type: "down" | "move" | "up"): void;
+}
+
 export class DOMRenderer implements IRenderer {
   private editorEl: HTMLElement | null = null;
   private positionEl: HTMLElement | null = null;
   private statusEl: HTMLElement | null = null;
   private modeEl: HTMLElement | null = null;
   private statsEl: HTMLElement | null = null;
+  private onMouseEvent: MouseEventCallback | null = null;
+  private isMouseDown: boolean = false;
 
   constructor() {
     this.editorEl = document.getElementById("editor");
@@ -15,6 +21,75 @@ export class DOMRenderer implements IRenderer {
     this.statusEl = document.getElementById("status");
     this.modeEl = document.getElementById("mode");
     this.statsEl = document.getElementById("stats");
+  }
+
+  setMouseCallback(callback: MouseEventCallback): void {
+    this.onMouseEvent = callback;
+    this.setupMouseEvents();
+  }
+
+  private setupMouseEvents(): void {
+    if (!this.editorEl) return;
+
+    this.editorEl.addEventListener("mousedown", (e) => {
+      const pos = this.getPositionFromEvent(e);
+      if (pos) {
+        this.isMouseDown = true;
+        this.onMouseEvent?.(pos.line, pos.col, "down");
+      }
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (this.isMouseDown) {
+        const pos = this.getPositionFromEvent(e);
+        if (pos) {
+          this.onMouseEvent?.(pos.line, pos.col, "move");
+        }
+      }
+    });
+
+    document.addEventListener("mouseup", () => {
+      if (this.isMouseDown) {
+        this.isMouseDown = false;
+        this.onMouseEvent?.(0, 0, "up");
+      }
+    });
+  }
+
+  private getPositionFromEvent(e: MouseEvent): { line: number; col: number } | null {
+    const target = e.target as HTMLElement;
+    
+    // Check if clicked on a char span
+    if (target.classList.contains("char")) {
+      const line = target.closest(".line");
+      if (line) {
+        const lineNum = parseInt(line.getAttribute("data-line") || "0");
+        const chars = Array.from(line.querySelectorAll(".char"));
+        const charIdx = chars.indexOf(target);
+        return { line: lineNum, col: Math.max(0, charIdx) };
+      }
+    }
+    
+    // Check if clicked on a line (but not on a char)
+    const line = target.closest(".line") as HTMLElement;
+    if (line) {
+      const lineNum = parseInt(line.getAttribute("data-line") || "0");
+      const chars = line.querySelectorAll(".char");
+      return { line: lineNum, col: chars.length };
+    }
+    
+    // Clicked on editor but outside lines - go to last line
+    if (target.closest(".editor")) {
+      const lines = this.editorEl?.querySelectorAll(".line");
+      if (lines && lines.length > 0) {
+        const lastLine = lines[lines.length - 1];
+        const lineNum = parseInt(lastLine.getAttribute("data-line") || "0");
+        const chars = lastLine.querySelectorAll(".char");
+        return { line: lineNum, col: chars.length };
+      }
+    }
+    
+    return null;
   }
 
   render(state: EditorState): void {
