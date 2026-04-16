@@ -84,8 +84,15 @@ body {
   padding: 0 24px;
 }
 
+/* Markdown mode - modern monospace font */
+.editor .content.mode-markdown {
+  font-family: "Fira Code", "JetBrains Mono", "SF Mono", monospace;
+}
+
+/* Screenplay mode - traditional screenplay font */
 .editor .content.mode-screenplay {
   max-width: 60ch;
+  font-family: "Courier New", "Courier Prime", Courier, monospace;
 }
 
 /* Screenplay line types - center only character names */
