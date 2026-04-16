@@ -11,6 +11,9 @@ export interface Config {
   h1Gray: number;
   h2Gray: number;
   h3Gray: number;
+  h4Gray: number;
+  h5Gray: number;
+  h6Gray: number;
   boldGray: number;
   italicGray: number;
   searchBg: number;
@@ -22,20 +25,23 @@ export const DEFAULT_CONFIG: Config = {
   wrapColumn: 80,
   tabSize: 2,
   autosaveMs: 500,
-  fadeGray: 244,
+  fadeGray: 140,
   cursorBlinkMs: 600,
   cursorStyle: "underline",
   mode: "markdown",
   sound: true,
   soundVolume: 60,
   h1Gray: 255,
-  h2Gray: 248,
-  h3Gray: 242,
+  h2Gray: 245,
+  h3Gray: 235,
+  h4Gray: 225,
+  h5Gray: 215,
+  h6Gray: 205,
   boldGray: 255,
-  italicGray: 245,
+  italicGray: 200,
   searchBg: 58,
   characterColor: 51,
-  accentColor: 36,
+  accentColor: 100,
 };
 
 export interface SettingsDef {

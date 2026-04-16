@@ -1,6 +1,11 @@
 export type TokenType =
   | "text"
-  | "heading"
+  | "h1"
+  | "h2"
+  | "h3"
+  | "h4"
+  | "h5"
+  | "h6"
   | "bold"
   | "italic"
   | "code"
@@ -41,12 +46,14 @@ function highlightMarkdownLine(line: string, isCurrentLine: boolean): HighlightT
   // Headings - ocultar # en líneas no activas
   const headingMatch = line.match(/^(#{1,6}) (.*)$/);
   if (headingMatch) {
+    const level = headingMatch[1].length as 1 | 2 | 3 | 4 | 5 | 6;
+    const headingType = `h${level}` as TokenType;
     tokens.push({ 
       text: headingMatch[1] + " ", 
       type: "marker",
       hidden: !isCurrentLine 
     });
-    tokens.push({ text: headingMatch[2], type: "heading" });
+    tokens.push({ text: headingMatch[2], type: headingType });
     return tokens;
   }
 

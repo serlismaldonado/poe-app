@@ -175,19 +175,40 @@ body {
   color: #fff;
 }
 
-/* Markdown syntax highlighting */
-.editor .char.token-heading {
-  color: var(--heading-color);
+/* Markdown syntax highlighting - Headings */
+.editor .char.token-h1 {
+  font-weight: bold;
+  font-size: 1.4em;
+}
+
+.editor .char.token-h2 {
+  font-weight: bold;
+  font-size: 1.3em;
+}
+
+.editor .char.token-h3 {
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.editor .char.token-h4 {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.editor .char.token-h5 {
+  font-weight: bold;
+}
+
+.editor .char.token-h6 {
   font-weight: bold;
 }
 
 .editor .char.token-bold {
-  color: var(--bold-color);
   font-weight: bold;
 }
 
 .editor .char.token-italic {
-  color: var(--italic-color);
   font-style: italic;
 }
 

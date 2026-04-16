@@ -123,6 +123,27 @@ export class DOMRenderer implements IRenderer {
         if (isCursor) className += " cursor";
         if (isSelected) className += " selected";
         if (isSearchMatch) className += " search-match";
+        
+        // Aplicar color de gris según configuración
+        let inlineStyle = "";
+        const cfg = state.cfg;
+        if (token.type === "h1" && cfg.h1Gray) {
+          inlineStyle = `color: rgb(${cfg.h1Gray}, ${cfg.h1Gray}, ${cfg.h1Gray})`;
+        } else if (token.type === "h2" && cfg.h2Gray) {
+          inlineStyle = `color: rgb(${cfg.h2Gray}, ${cfg.h2Gray}, ${cfg.h2Gray})`;
+        } else if (token.type === "h3" && cfg.h3Gray) {
+          inlineStyle = `color: rgb(${cfg.h3Gray}, ${cfg.h3Gray}, ${cfg.h3Gray})`;
+        } else if (token.type === "h4" && cfg.h4Gray) {
+          inlineStyle = `color: rgb(${cfg.h4Gray}, ${cfg.h4Gray}, ${cfg.h4Gray})`;
+        } else if (token.type === "h5" && cfg.h5Gray) {
+          inlineStyle = `color: rgb(${cfg.h5Gray}, ${cfg.h5Gray}, ${cfg.h5Gray})`;
+        } else if (token.type === "h6" && cfg.h6Gray) {
+          inlineStyle = `color: rgb(${cfg.h6Gray}, ${cfg.h6Gray}, ${cfg.h6Gray})`;
+        } else if (token.type === "bold" && cfg.boldGray) {
+          inlineStyle = `color: rgb(${cfg.boldGray}, ${cfg.boldGray}, ${cfg.boldGray})`;
+        } else if (token.type === "italic" && cfg.italicGray) {
+          inlineStyle = `color: rgb(${cfg.italicGray}, ${cfg.italicGray}, ${cfg.italicGray})`;
+        }
 
         // Marcar espacios de indentación en screenplay
         if (mode === "screenplay" && col < lineIndent && char === " ") {
@@ -147,7 +168,8 @@ export class DOMRenderer implements IRenderer {
           }
         }
 
-        html += `<span class="${className}">${this.escapeChar(char)}</span>`;
+        const styleAttr = inlineStyle ? ` style="${inlineStyle}"` : "";
+        html += `<span class="${className}"${styleAttr}>${this.escapeChar(char)}</span>`;
       }
       charOffset += token.text.length;
     }
