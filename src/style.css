@@ -14,7 +14,8 @@
   --status-border: #333;
   --line-height: 1.6;
   --font-size: 14px;
-  
+  --fade-color: #666;
+
   /* Markdown syntax colors */
   --heading-color: #81c784;
   --bold-color: #ffb74d;
@@ -23,6 +24,14 @@
   --link-color: #81c784;
   --list-color: #90caf9;
   --blockquote-color: #9fa8da;
+
+  /* Screenplay colors */
+  --scene-heading-color: #fff;
+  --character-color: #4dd0e1;
+  --dialogue-color: #e0e0e0;
+  --parenthetical-color: #9e9e9e;
+  --action-color: #bdbdbd;
+  --transition-color: #757575;
 }
 
 html,
@@ -34,7 +43,7 @@ body {
 body {
   background: var(--bg);
   color: var(--fg);
-  font-family: "Fira Code", "JetBrains Mono", "Menlo", monospace;
+  font-family: "Courier Prime", "Courier New", monospace;
   font-size: var(--font-size);
   line-height: var(--line-height);
   overflow: hidden;
@@ -59,7 +68,7 @@ body {
   flex: 1;
   overflow: auto;
   padding: 16px;
-  font-family: "Fira Code", "JetBrains Mono", "Menlo", monospace;
+  font-family: "Courier Prime", "Courier New", monospace;
   font-size: var(--font-size);
   line-height: var(--line-height);
   white-space: pre-wrap;
@@ -70,6 +79,10 @@ body {
   display: block;
   min-height: 1.6em;
   white-space: pre;
+}
+
+.editor .line.active {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .editor .char {
@@ -89,7 +102,16 @@ body {
   color: var(--fg);
 }
 
-/* Syntax highlighting */
+.editor .char.faded {
+  color: var(--fade-color);
+}
+
+.editor .char.search-match {
+  background: #5a4a00;
+  color: #fff;
+}
+
+/* Markdown syntax highlighting */
 .editor .char.token-heading {
   color: var(--heading-color);
   font-weight: bold;
@@ -108,8 +130,6 @@ body {
 .editor .char.token-code {
   color: var(--code-color);
   background: rgba(255, 0, 0, 0.1);
-  border-radius: 2px;
-  padding: 0 2px;
 }
 
 .editor .char.token-link {
@@ -126,6 +146,37 @@ body {
   font-style: italic;
 }
 
+/* Screenplay syntax highlighting */
+.editor .char.token-scene-heading {
+  color: var(--scene-heading-color);
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.editor .char.token-character {
+  color: var(--character-color);
+  font-weight: bold;
+}
+
+.editor .char.token-dialogue {
+  color: var(--dialogue-color);
+}
+
+.editor .char.token-parenthetical {
+  color: var(--parenthetical-color);
+  font-style: italic;
+}
+
+.editor .char.token-action {
+  color: var(--action-color);
+}
+
+.editor .char.token-transition {
+  color: var(--transition-color);
+  text-transform: uppercase;
+}
+
+/* Status bar */
 .status-bar {
   background: var(--status-bg);
   padding: 8px 16px;
@@ -184,16 +235,6 @@ body {
   background: #666;
 }
 
-/* Focus mode - fade non-active lines */
-.editor.focus-mode .line:not(.active) {
-  opacity: 0.4;
-  color: #666;
-}
-
-.editor.focus-mode .line.active {
-  opacity: 1;
-}
-
 /* Search bar */
 .search-bar {
   background: var(--status-bg);
@@ -241,14 +282,4 @@ body {
 
 .search-btn:hover {
   background: var(--status-border);
-}
-
-/* Search highlight in editor */
-.editor .char.search-match {
-  background: #5a4a00;
-  color: #fff;
-}
-
-.editor .char.search-match.current {
-  background: #8a7a00;
 }

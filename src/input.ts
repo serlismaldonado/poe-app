@@ -61,11 +61,16 @@ export class InputHandler {
       e.preventDefault();
       this.editor.handleDelete();
     });
+
+    this.handlers.set("Escape", (e) => {
+      e.preventDefault();
+      this.onEscape?.();
+    });
   }
 
   install(): void {
     document.addEventListener("keydown", (e) => this.handleKeyDown(e));
-    document.addEventListener("keypress", (e) => this.handleKeyPress(e));
+    document.addEventListener("paste", (e) => this.handlePasteEvent(e));
   }
 
   private handleKeyDown(e: KeyboardEvent): void {
@@ -77,15 +82,18 @@ export class InputHandler {
       const handler = this.handlers.get(e.key);
       if (handler) {
         handler(e);
+      } else if (e.key && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        this.editor.handleChar(e.key);
       }
     }
   }
 
-  private handleKeyPress(e: KeyboardEvent): void {
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-    if (e.key && e.key.length === 1) {
-      e.preventDefault();
-      this.editor.handleChar(e.key);
+  private handlePasteEvent(e: ClipboardEvent): void {
+    e.preventDefault();
+    const text = e.clipboardData?.getData("text/plain");
+    if (text) {
+      this.editor.handlePaste(text);
     }
   }
 
@@ -117,21 +125,13 @@ export class InputHandler {
         e.preventDefault();
         this.editor.killLine();
         break;
-      case "HOME":
+      case "B":
         e.preventDefault();
-        this.editor.handleCtrlHome();
+        this.editor.toggleBold();
         break;
-      case "END":
+      case "I":
         e.preventDefault();
-        this.editor.handleCtrlEnd();
-        break;
-      case "ARROWUP":
-        e.preventDefault();
-        this.editor.moveLineUp();
-        break;
-      case "ARROWDOWN":
-        e.preventDefault();
-        this.editor.moveLineDown();
+        this.editor.toggleItalic();
         break;
       case "F":
         e.preventDefault();
@@ -141,18 +141,34 @@ export class InputHandler {
         e.preventDefault();
         this.onGoto?.();
         break;
+      case "HOME":
+        e.preventDefault();
+        this.editor.handleCtrlHome();
+        break;
+      case "END":
+        e.preventDefault();
+        this.editor.handleCtrlEnd();
+        break;
+      case "ARROWLEFT":
+        e.preventDefault();
+        this.editor.wordLeft();
+        break;
+      case "ARROWRIGHT":
+        e.preventDefault();
+        this.editor.wordRight();
+        break;
     }
   }
 
   private handleAltKey(e: KeyboardEvent): void {
-    const key = e.key.toUpperCase();
+    const key = e.key;
 
     switch (key) {
-      case "ARROWUP":
+      case "ArrowUp":
         e.preventDefault();
         this.editor.moveLineUp();
         break;
-      case "ARROWDOWN":
+      case "ArrowDown":
         e.preventDefault();
         this.editor.moveLineDown();
         break;
@@ -162,4 +178,5 @@ export class InputHandler {
   onSave?: () => void;
   onSearch?: () => void;
   onGoto?: () => void;
+  onEscape?: () => void;
 }

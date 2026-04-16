@@ -1,22 +1,24 @@
 import { EditorState } from "../state";
 import { IRenderer } from "./types";
-import { highlightMarkdownLine } from "../lib/markdown-highlight";
+import { highlightLine, TokenType } from "../lib/highlight";
 
 export class DOMRenderer implements IRenderer {
   private editorEl: HTMLElement | null = null;
   private positionEl: HTMLElement | null = null;
   private statusEl: HTMLElement | null = null;
+  private modeEl: HTMLElement | null = null;
 
   constructor() {
     this.editorEl = document.getElementById("editor");
     this.positionEl = document.getElementById("position");
     this.statusEl = document.getElementById("status");
+    this.modeEl = document.getElementById("mode");
   }
 
   render(state: EditorState): void {
     if (!this.editorEl) return;
 
-    const html = this.highlightLines(state.lines, state);
+    const html = this.renderLines(state);
     this.editorEl.innerHTML = html;
     this.updatePosition(state);
     this.updateStatus(state);
@@ -36,50 +38,59 @@ export class DOMRenderer implements IRenderer {
     }
   }
 
-  private highlightLines(lines: string[], state: EditorState): string {
-    return lines
-      .map((line, lineNum) => this.highlightLine(line, lineNum, state))
-      .map((content, idx) => `<div class="line" data-line="${idx}">${content}</div>`)
+  private renderLines(state: EditorState): string {
+    const mode = (state.cfg.mode || "markdown") as "markdown" | "screenplay";
+    
+    return state.lines
+      .map((line, lineNum) => {
+        const isCurrentLine = lineNum === state.cursorLine;
+        const lineClass = isCurrentLine ? "line active" : "line";
+        const content = this.renderLine(line, lineNum, state, mode);
+        return `<div class="${lineClass}" data-line="${lineNum}">${content}</div>`;
+      })
       .join("");
   }
 
-  private highlightLine(line: string, lineNum: number, state: EditorState): string {
-    const tokens = highlightMarkdownLine(line);
+  private renderLine(
+    line: string,
+    lineNum: number,
+    state: EditorState,
+    mode: "markdown" | "screenplay"
+  ): string {
+    const tokens = highlightLine(line, mode);
     let html = "";
     let charOffset = 0;
+    const isCurrentLine = lineNum === state.cursorLine;
 
     for (const token of tokens) {
       for (let i = 0; i < token.text.length; i++) {
         const char = token.text[i];
         const col = charOffset + i;
-        const isCurrentLine = lineNum === state.cursorLine;
         const isCursor = isCurrentLine && col === state.cursorCol;
         const isSelected = this.isCharSelected(lineNum, col, state);
+        const isSearchMatch = this.isSearchMatch(lineNum, col, state);
 
         let className = `char token-${token.type}`;
         if (isCursor) className += " cursor";
         if (isSelected) className += " selected";
+        if (isSearchMatch) className += " search-match";
 
-        let displayChar = char;
-        if (char === " ") {
-          displayChar = "&nbsp;";
-        } else if (char === "\t") {
-          displayChar = "&nbsp;&nbsp;&nbsp;&nbsp;";
-        } else if (char === "<") {
-          displayChar = "&lt;";
-        } else if (char === ">") {
-          displayChar = "&gt;";
-        } else if (char === "&") {
-          displayChar = "&amp;";
+        // Focus mode: fade non-active lines (but not scene headings/characters in screenplay)
+        if (!isCurrentLine && !state.selectionStart && mode === "screenplay") {
+          if (token.type !== "scene-heading" && token.type !== "character") {
+            className += " faded";
+          }
+        } else if (!isCurrentLine && !state.selectionStart && mode === "markdown") {
+          className += " faded";
         }
 
-        html += `<span class="${className}">${displayChar}</span>`;
+        html += `<span class="${className}">${this.escapeChar(char)}</span>`;
       }
       charOffset += token.text.length;
     }
 
-    // Ensure cursor shows at end of line
-    if (state.cursorLine === lineNum && state.cursorCol === line.length) {
+    // Cursor at end of line
+    if (isCurrentLine && state.cursorCol === line.length) {
       html += '<span class="char cursor">&nbsp;</span>';
     }
 
@@ -88,6 +99,23 @@ export class DOMRenderer implements IRenderer {
     }
 
     return html;
+  }
+
+  private escapeChar(char: string): string {
+    switch (char) {
+      case " ":
+        return "&nbsp;";
+      case "\t":
+        return "&nbsp;&nbsp;&nbsp;&nbsp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case "&":
+        return "&amp;";
+      default:
+        return char;
+    }
   }
 
   private isCharSelected(
@@ -116,6 +144,25 @@ export class DOMRenderer implements IRenderer {
     return true;
   }
 
+  private isSearchMatch(
+    lineNum: number,
+    col: number,
+    state: EditorState
+  ): boolean {
+    if (!state.searchMode || !state.searchQuery) return false;
+
+    for (const match of state.searchMatches) {
+      if (
+        match.line === lineNum &&
+        col >= match.col &&
+        col < match.col + (match.length || state.searchQuery.length)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private updatePosition(state: EditorState): void {
     if (this.positionEl) {
       const line = state.cursorLine + 1;
@@ -125,13 +172,15 @@ export class DOMRenderer implements IRenderer {
   }
 
   private updateStatus(state: EditorState): void {
-    if (this.statusEl) {
+    if (this.modeEl) {
       const mode = (state.cfg.mode || "markdown").toUpperCase();
-      let status = mode;
+      this.modeEl.textContent = mode;
+    }
+
+    if (this.statusEl) {
       if (state.isSaving) {
-        status += " [saving...]";
+        this.statusEl.textContent = "Saving...";
       }
-      this.statusEl.textContent = status;
     }
   }
 
@@ -141,7 +190,7 @@ export class DOMRenderer implements IRenderer {
     const lines = this.editorEl.querySelectorAll(".line");
     if (lines[state.cursorLine]) {
       const line = lines[state.cursorLine] as HTMLElement;
-      line.scrollIntoView({ behavior: "auto", block: "center" });
+      line.scrollIntoView({ behavior: "auto", block: "nearest" });
     }
   }
 }
