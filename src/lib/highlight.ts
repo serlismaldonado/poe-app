@@ -21,12 +21,40 @@ export interface HighlightToken {
 
 export function highlightLine(
   line: string,
-  mode: "markdown" | "screenplay"
+  mode: "markdown" | "screenplay" | "novel"
 ): HighlightToken[] {
   if (mode === "screenplay") {
     return highlightScreenplayLine(line);
   }
+  if (mode === "novel") {
+    return highlightNovelLine(line);
+  }
   return highlightMarkdownLine(line);
+}
+
+function highlightNovelLine(line: string): HighlightToken[] {
+  const tokens: HighlightToken[] = [];
+
+  // Chapter headings
+  if (/^(cap[ií]tulo|chapter|parte|part)\s+/i.test(line.trim())) {
+    tokens.push({ text: line, type: "heading" });
+    return tokens;
+  }
+
+  // Scene breaks (*** or ---)
+  if (/^(\*{3,}|-{3,})$/.test(line.trim())) {
+    tokens.push({ text: line, type: "transition" });
+    return tokens;
+  }
+
+  // Default prose
+  if (line.length === 0) {
+    tokens.push({ text: "", type: "text" });
+    return tokens;
+  }
+
+  tokens.push({ text: line, type: "text" });
+  return tokens;
 }
 
 function highlightMarkdownLine(line: string): HighlightToken[] {

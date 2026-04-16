@@ -42,7 +42,7 @@ export class DOMRenderer implements IRenderer {
   }
 
   private renderLines(state: EditorState): string {
-    const mode = (state.cfg.mode || "markdown") as "markdown" | "screenplay";
+    const mode = (state.cfg.mode || "markdown") as "markdown" | "screenplay" | "novel";
     
     return state.lines
       .map((line, lineNum) => {
@@ -75,7 +75,7 @@ export class DOMRenderer implements IRenderer {
     line: string,
     lineNum: number,
     state: EditorState,
-    mode: "markdown" | "screenplay"
+    mode: "markdown" | "screenplay" | "novel"
   ): string {
     const tokens = highlightLine(line, mode);
     let html = "";

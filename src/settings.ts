@@ -5,7 +5,7 @@ export interface Config {
   fadeGray: number;
   cursorBlinkMs: number;
   cursorStyle: "bar" | "underline" | "block";
-  mode: "markdown" | "screenplay";
+  mode: "markdown" | "screenplay" | "novel";
   sound: boolean;
   soundVolume: number;
   h1Gray: number;

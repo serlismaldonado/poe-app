@@ -69,7 +69,10 @@ export class Editor {
 
   toggleMode(): void {
     const currentMode = this.state.cfg.mode || "markdown";
-    this.state.cfg.mode = currentMode === "markdown" ? "screenplay" : "markdown";
+    const modes = ["markdown", "screenplay", "novel"] as const;
+    const currentIndex = modes.indexOf(currentMode as any);
+    const nextIndex = (currentIndex + 1) % modes.length;
+    this.state.cfg.mode = modes[nextIndex];
     this.render();
   }
 
