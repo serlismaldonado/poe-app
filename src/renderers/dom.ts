@@ -35,6 +35,7 @@ export class DOMRenderer implements IRenderer {
       const pos = this.getPositionFromEvent(e);
       if (pos) {
         this.isMouseDown = true;
+        this.isDragging = true;
         this.onMouseEvent?.(pos.line, pos.col, "down");
       }
     });
@@ -51,6 +52,8 @@ export class DOMRenderer implements IRenderer {
     document.addEventListener("mouseup", () => {
       if (this.isMouseDown) {
         this.isMouseDown = false;
+        this.isDragging = false;
+        this.fullRenderNeeded = true;
         this.onMouseEvent?.(0, 0, "up");
       }
     });
@@ -94,6 +97,7 @@ export class DOMRenderer implements IRenderer {
 
   private lastState: { cursorLine: number; cursorCol: number; selectionStart: any; linesHash: string } | null = null;
   private fullRenderNeeded: boolean = true;
+  private isDragging: boolean = false;
 
   render(state: EditorState): void {
     if (!this.editorEl) return;
@@ -104,7 +108,8 @@ export class DOMRenderer implements IRenderer {
     // Check if we need full render or just cursor update
     const needsFullRender = this.fullRenderNeeded || 
       !this.lastState || 
-      this.lastState.linesHash !== linesHash;
+      this.lastState.linesHash !== linesHash ||
+      (!this.isDragging && this.lastState.cursorLine !== state.cursorLine);
 
     if (needsFullRender) {
       const html = this.renderLines(state);
