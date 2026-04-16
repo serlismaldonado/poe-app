@@ -101,30 +101,31 @@ body {
   font-family: "Georgia", "Palatino Linotype", "Book Antiqua", Palatino, serif;
   font-size: 16px;
   line-height: 1.8;
-  text-align: justify;
-  hyphens: auto;
 }
 
 .editor .content.mode-novel .line {
-  text-indent: 2em;
+  white-space: pre-wrap !important;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
-/* No indent for: empty lines, paragraph starts, active line, chapters */
+/* No indent for: empty lines, paragraph starts, chapters */
 .editor .content.mode-novel .line.empty-line,
-.editor .content.mode-novel .line.paragraph-start,
-.editor .content.mode-novel .line.active {
+.editor .content.mode-novel .line.paragraph-start {
   text-indent: 0;
+}
+
+/* Regular paragraph lines get indent */
+.editor .content.mode-novel .line:not(.empty-line):not(.paragraph-start):not(.active) {
+  text-indent: 2em;
 }
 
 /* Chapter headings in novel mode */
 .editor .content.mode-novel .line.paragraph-start .char.token-heading {
   font-size: 1.3em;
   font-weight: bold;
-}
-
-/* Add padding-left to active line to simulate indent position for cursor */
-.editor .content.mode-novel .line.active:not(.paragraph-start):not(.empty-line) {
-  padding-left: 2em;
+  color: var(--heading-color);
 }
 
 /* Screenplay line types - center only character names */
