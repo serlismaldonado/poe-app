@@ -48,7 +48,23 @@ export class DOMRenderer implements IRenderer {
       .map((line, lineNum) => {
         const isCurrentLine = lineNum === state.cursorLine;
         const elementType = mode === "screenplay" ? this.getLineElementType(line) : "";
-        const lineClass = `line${isCurrentLine ? " active" : ""}${elementType ? " " + elementType : ""}`;
+        
+        // Novel mode: detect empty lines and paragraph starts
+        let novelClass = "";
+        if (mode === "novel") {
+          const isEmpty = line.trim() === "";
+          const prevLineEmpty = lineNum > 0 && state.lines[lineNum - 1].trim() === "";
+          const isFirstLine = lineNum === 0;
+          const isChapter = /^(cap[ií]tulo|chapter|parte|part)\s+/i.test(line.trim());
+          
+          if (isEmpty) {
+            novelClass = " empty-line";
+          } else if (isFirstLine || prevLineEmpty || isChapter) {
+            novelClass = " paragraph-start";
+          }
+        }
+        
+        const lineClass = `line${isCurrentLine ? " active" : ""}${elementType}${novelClass}`;
         const content = this.renderLine(line, lineNum, state, mode);
         return `<div class="${lineClass}" data-line="${lineNum}">${content}</div>`;
       })

@@ -109,17 +109,22 @@ body {
   text-indent: 2em;
 }
 
-.editor .content.mode-novel .line:first-child,
+/* No indent for: empty lines, paragraph starts, active line, chapters */
+.editor .content.mode-novel .line.empty-line,
+.editor .content.mode-novel .line.paragraph-start,
 .editor .content.mode-novel .line.active {
   text-indent: 0;
 }
 
 /* Chapter headings in novel mode */
-.editor .content.mode-novel .char.token-heading {
-  font-size: 1.2em;
+.editor .content.mode-novel .line.paragraph-start .char.token-heading {
+  font-size: 1.3em;
   font-weight: bold;
-  text-align: center;
-  display: inline;
+}
+
+/* Add padding-left to active line to simulate indent position for cursor */
+.editor .content.mode-novel .line.active:not(.paragraph-start):not(.empty-line) {
+  padding-left: 2em;
 }
 
 /* Screenplay line types - center only character names */
