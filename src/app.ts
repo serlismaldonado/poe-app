@@ -6,6 +6,7 @@ import { Config, loadConfig } from "./settings";
 import { detectTauri } from "./lib/tauri-detect";
 import { SearchBar } from "./ui/search-bar";
 import { SettingsPanel } from "./ui/settings-panel";
+import { FileSwitcher } from "./ui/file-switcher";
 import { openFileDialog, saveFileDialog, saveFile, getFileName } from "./file-ops";
 import { listen } from "@tauri-apps/api/event";
 
@@ -16,6 +17,7 @@ export class App {
   private soundManager: SoundManager;
   private searchBar: SearchBar | null = null;
   private settingsPanel: SettingsPanel | null = null;
+  private fileSwitcher: FileSwitcher | null = null;
   private currentFile: string | null = null;
   private isTauri: boolean = false;
   private config: Config | null = null;
@@ -77,13 +79,19 @@ export class App {
       this.settingsPanel = new SettingsPanel(cfg);
       this.settingsPanel.create(editorContainer as HTMLElement);
       this.settingsPanel.setOnConfigChange((newCfg) => this.handleConfigChange(newCfg));
+      
+      this.fileSwitcher = new FileSwitcher();
+      this.fileSwitcher.create(editorContainer as HTMLElement);
+      this.fileSwitcher.setOnFileSelect((path, content) => this.handleFileFromSwitcher(path, content));
     }
 
     this.inputHandler = new InputHandler(this.editor);
     this.inputHandler.onSave = () => this.handleSave();
     this.inputHandler.onOpen = () => this.handleOpen();
+    this.inputHandler.onNew = () => this.handleNew();
     this.inputHandler.onSearch = () => this.searchBar?.toggle();
     this.inputHandler.onSettings = () => this.settingsPanel?.toggle();
+    this.inputHandler.onSwitcher = () => this.fileSwitcher?.toggle(this.currentFile);
     this.inputHandler.onKeyDown = (e) => this.handleGlobalKey(e);
     this.inputHandler.install();
 
@@ -105,13 +113,33 @@ export class App {
     await listen("menu-save", () => this.handleSave());
     await listen("menu-save-as", () => this.handleSaveAs());
     await listen("menu-settings", () => this.settingsPanel?.toggle());
+    await listen("menu-new", () => this.handleNew());
+    await listen("menu-switcher", () => this.fileSwitcher?.toggle(this.currentFile));
   }
 
   private handleGlobalKey(e: KeyboardEvent): boolean {
     if (this.settingsPanel?.isOpen()) {
       return this.settingsPanel.handleKey(e);
     }
+    if (this.fileSwitcher?.isOpen()) {
+      return this.fileSwitcher.handleKey(e);
+    }
     return false;
+  }
+
+  private handleNew(): void {
+    if (!this.editor) return;
+    this.currentFile = null;
+    this.editor.setContent([""]);
+    this.updateFilename();
+    localStorage.removeItem("poe:draft");
+  }
+
+  private handleFileFromSwitcher(path: string, content: string): void {
+    if (!this.editor) return;
+    this.currentFile = path;
+    this.editor.setContent(content.split("\n"));
+    this.updateFilename();
   }
 
   private handleConfigChange(newCfg: Config): void {

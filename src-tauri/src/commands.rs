@@ -34,6 +34,35 @@ pub fn get_config_path_cmd() -> String {
 }
 
 #[tauri::command]
+pub fn list_md_files(dir: String) -> Result<Vec<String>, String> {
+    let path = PathBuf::from(&dir);
+    if !path.is_dir() {
+        return Ok(vec![]);
+    }
+    
+    let mut files: Vec<String> = fs::read_dir(&path)
+        .map_err(|e| e.to_string())?
+        .filter_map(|entry| entry.ok())
+        .filter_map(|entry| {
+            let path = entry.path();
+            if path.is_file() {
+                if let Some(ext) = path.extension() {
+                    if ext == "md" || ext == "markdown" || ext == "txt" {
+                        return path.file_name()
+                            .and_then(|n| n.to_str())
+                            .map(|s| s.to_string());
+                    }
+                }
+            }
+            None
+        })
+        .collect();
+    
+    files.sort();
+    Ok(files)
+}
+
+#[tauri::command]
 pub fn save_cursor_position(
     line: i32,
     col: i32,

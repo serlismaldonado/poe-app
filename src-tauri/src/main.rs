@@ -9,15 +9,20 @@ use std::sync::Mutex;
 use tauri::{Menu, MenuItem, Submenu, CustomMenuItem};
 
 fn create_menu() -> Menu {
+    let new_file = CustomMenuItem::new("new", "New").accelerator("CmdOrCtrl+N");
     let open = CustomMenuItem::new("open", "Open").accelerator("CmdOrCtrl+O");
     let save = CustomMenuItem::new("save", "Save").accelerator("CmdOrCtrl+S");
     let save_as = CustomMenuItem::new("save_as", "Save As...").accelerator("CmdOrCtrl+Shift+S");
+    let switcher = CustomMenuItem::new("switcher", "Switch File...").accelerator("CmdOrCtrl+P");
     let settings = CustomMenuItem::new("settings", "Settings...").accelerator("CmdOrCtrl+,");
     
     let file_menu = Submenu::new("File", Menu::new()
+        .add_item(new_file)
         .add_item(open)
         .add_item(save)
         .add_item(save_as)
+        .add_native_item(MenuItem::Separator)
+        .add_item(switcher)
         .add_native_item(MenuItem::Separator)
         .add_item(settings)
         .add_native_item(MenuItem::Separator)
@@ -72,6 +77,12 @@ fn main() {
                 "settings" => {
                     window.emit("menu-settings", {}).unwrap();
                 }
+                "new" => {
+                    window.emit("menu-new", {}).unwrap();
+                }
+                "switcher" => {
+                    window.emit("menu-switcher", {}).unwrap();
+                }
                 _ => {}
             }
         })
@@ -86,6 +97,7 @@ fn main() {
             commands::load_settings,
             commands::save_settings,
             commands::get_config_path_cmd,
+            commands::list_md_files,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

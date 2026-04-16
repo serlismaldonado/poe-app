@@ -154,6 +154,14 @@ export class InputHandler {
         e.preventDefault();
         this.onSettings?.();
         break;
+      case "N":
+        e.preventDefault();
+        this.onNew?.();
+        break;
+      case "P":
+        e.preventDefault();
+        this.onSwitcher?.();
+        break;
       case "M":
         e.preventDefault();
         this.editor.toggleMode();
@@ -194,8 +202,10 @@ export class InputHandler {
 
   onSave?: () => void;
   onOpen?: () => void;
+  onNew?: () => void;
   onSearch?: () => void;
   onSettings?: () => void;
+  onSwitcher?: () => void;
   onGoto?: () => void;
   onEscape?: () => void;
   onKeyDown?: (e: KeyboardEvent) => boolean;
