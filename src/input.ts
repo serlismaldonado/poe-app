@@ -141,6 +141,10 @@ export class InputHandler {
         e.preventDefault();
         this.onGoto?.();
         break;
+      case "M":
+        e.preventDefault();
+        this.editor.toggleMode();
+        break;
       case "HOME":
         e.preventDefault();
         this.editor.handleCtrlHome();

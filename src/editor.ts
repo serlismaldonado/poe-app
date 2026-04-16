@@ -67,6 +67,12 @@ export class Editor {
     return this.state.cfg.mode || "markdown";
   }
 
+  toggleMode(): void {
+    const currentMode = this.state.cfg.mode || "markdown";
+    this.state.cfg.mode = currentMode === "markdown" ? "screenplay" : "markdown";
+    this.render();
+  }
+
   private snapshot(): EditorSnapshot {
     return {
       lines: this.state.lines.slice(),
