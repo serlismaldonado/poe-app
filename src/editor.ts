@@ -1,6 +1,7 @@
 import { EditorState, EditorSnapshot, createState } from "./state";
 import { Config } from "./settings";
 import { IRenderer } from "./renderers/types";
+import { DOMRenderer } from "./renderers/dom";
 import { SearchEngine, SearchMatch } from "./search";
 import { SoundManager } from "./sound";
 
@@ -107,6 +108,13 @@ export class Editor {
       this.mouseRenderPending = false;
       this.render();
     });
+  }
+
+  forceFullRender(): void {
+    if (this.renderer instanceof DOMRenderer) {
+      (this.renderer as DOMRenderer).forceFullRender();
+    }
+    this.render();
   }
 
   getMode(): string {

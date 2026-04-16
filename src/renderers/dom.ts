@@ -92,15 +92,99 @@ export class DOMRenderer implements IRenderer {
     return null;
   }
 
+  private lastState: { cursorLine: number; cursorCol: number; selectionStart: any; linesHash: string } | null = null;
+  private fullRenderNeeded: boolean = true;
+
   render(state: EditorState): void {
     if (!this.editorEl) return;
 
     const mode = state.cfg.mode || "markdown";
-    const html = this.renderLines(state);
-    this.editorEl.innerHTML = `<div class="content mode-${mode}">${html}</div>`;
+    const linesHash = state.lines.join("\n");
+    
+    // Check if we need full render or just cursor update
+    const needsFullRender = this.fullRenderNeeded || 
+      !this.lastState || 
+      this.lastState.linesHash !== linesHash;
+
+    if (needsFullRender) {
+      const html = this.renderLines(state);
+      this.editorEl.innerHTML = `<div class="content mode-${mode}">${html}</div>`;
+      this.fullRenderNeeded = false;
+    } else {
+      // Just update cursor and selection classes
+      this.updateCursorAndSelection(state);
+    }
+
+    this.lastState = {
+      cursorLine: state.cursorLine,
+      cursorCol: state.cursorCol,
+      selectionStart: state.selectionStart ? { ...state.selectionStart } : null,
+      linesHash
+    };
+
     this.updatePosition(state);
     this.updateStatus(state);
     this.scrollToVisibleCursor(state);
+  }
+
+  forceFullRender(): void {
+    this.fullRenderNeeded = true;
+  }
+
+  private updateCursorAndSelection(state: EditorState): void {
+    const content = this.editorEl?.querySelector(".content");
+    if (!content) return;
+
+    // Remove old cursor and selection classes
+    content.querySelectorAll(".cursor").forEach(el => el.classList.remove("cursor"));
+    content.querySelectorAll(".selected").forEach(el => el.classList.remove("selected"));
+    content.querySelectorAll(".line.active").forEach(el => el.classList.remove("active"));
+
+    // Add active line class
+    const lines = content.querySelectorAll(".line");
+    if (lines[state.cursorLine]) {
+      lines[state.cursorLine].classList.add("active");
+    }
+
+    // Add cursor class
+    const cursorLine = lines[state.cursorLine];
+    if (cursorLine) {
+      const chars = cursorLine.querySelectorAll(".char");
+      if (chars[state.cursorCol]) {
+        chars[state.cursorCol].classList.add("cursor");
+      } else if (chars.length > 0 && state.cursorCol >= chars.length) {
+        // Cursor at end of line - add to last char or create placeholder
+        chars[chars.length - 1]?.classList.add("cursor");
+      }
+    }
+
+    // Add selection classes
+    if (state.selectionStart) {
+      const sel = this.normalizeSelection(state.selectionStart, { line: state.cursorLine, col: state.cursorCol });
+      if (sel) {
+        for (let lineNum = sel.start.line; lineNum <= sel.end.line; lineNum++) {
+          const line = lines[lineNum];
+          if (!line) continue;
+          const chars = line.querySelectorAll(".char");
+          
+          const startCol = lineNum === sel.start.line ? sel.start.col : 0;
+          const endCol = lineNum === sel.end.line ? sel.end.col : chars.length;
+          
+          for (let col = startCol; col < endCol; col++) {
+            if (chars[col]) {
+              chars[col].classList.add("selected");
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private normalizeSelection(start: { line: number; col: number }, end: { line: number; col: number }) {
+    if (start.line < end.line || (start.line === end.line && start.col <= end.col)) {
+      return { start, end };
+    }
+    return { start: end, end: start };
   }
 
   setSize(width: number, height: number): void {
