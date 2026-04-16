@@ -1,0 +1,150 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+env:
+  CARGO_TERM_COLOR: always
+  TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+  TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin'
+            artifact_name: 'macos'
+            artifact_path: 'src-tauri/target/aarch64-apple-darwin/release/bundle/'
+
+          - platform: 'windows-latest'
+            args: '--target x86_64-pc-windows-msvc'
+            artifact_name: 'windows'
+            artifact_path: 'src-tauri/target/x86_64-pc-windows-msvc/release/bundle/'
+
+          - platform: 'ubuntu-latest'
+            args: '--target x86_64-unknown-linux-gnu'
+            artifact_name: 'linux'
+            artifact_path: 'src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/'
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install Rust (Linux/Windows)
+      if: matrix.platform != 'macos-latest'
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.platform == 'windows-latest' && 'x86_64-pc-windows-msvc' || 'x86_64-unknown-linux-gnu' }}
+
+    - name: Install Rust (macOS)
+      if: matrix.platform == 'macos-latest'
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: aarch64-apple-darwin
+
+    - name: Install dependencies (Ubuntu)
+      if: matrix.platform == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+    - name: Install dependencies (macOS)
+      if: matrix.platform == 'macos-latest'
+      run: |
+        brew install create-dmg
+
+    - name: Install frontend dependencies
+      run: npm ci
+
+    - name: Build frontend
+      run: npm run build:ui
+
+    - name: Build Tauri app
+      run: npm run tauri build ${{ matrix.args }}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact_name }}-bundles
+        path: ${{ matrix.artifact_path }}
+        retention-days: 7
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Organize release files
+      run: |
+        mkdir -p release
+
+        # macOS
+        if [ -d "artifacts/macos-bundles" ]; then
+          mkdir -p release/macos
+          find artifacts/macos-bundles -type f \( -name "*.dmg" -o -name "*.app" \) -exec cp {} release/macos/ \;
+        fi
+
+        # Windows
+        if [ -d "artifacts/windows-bundles" ]; then
+          mkdir -p release/windows
+          find artifacts/windows-bundles -type f \( -name "*.msi" -o -name "*.exe" \) -exec cp {} release/windows/ \;
+        fi
+
+        # Linux
+        if [ -d "artifacts/linux-bundles" ]; then
+          mkdir -p release/linux
+          find artifacts/linux-bundles -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) -exec cp {} release/linux/ \;
+        fi
+
+        # Create README
+        cat > release/README.md << 'EOF'
+        # Poe - Releases
+
+        ## Instaladores disponibles:
+
+        ### macOS
+        - Descarga el archivo `.dmg` y arrastra `Poe.app` a la carpeta Aplicaciones
+
+        ### Windows
+        - Ejecuta el instalador `.msi` o el ejecutable `.exe`
+
+        ### Linux
+        - **Debian/Ubuntu**: Instala con `.deb`
+        - **Fedora/RHEL**: Instala con `.rpm`
+        - **Portable**: Ejecuta el `.AppImage` (hazlo ejecutable primero: `chmod +x *.AppImage`)
+
+        ## Versión: ${{ github.ref_name }}
+        EOF
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: release/**/*
+        generate_release_notes: true
+        draft: false
+        prerelease: false
