@@ -94,17 +94,17 @@ function highlightMarkdownLine(line: string): HighlightToken[] {
     return tokens;
   }
 
-  // Detect URLs
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  // Detect URLs, domains, and emails
+  const linkRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9][-a-zA-Z0-9]*\.(com|org|net|io|dev|co|me|app|xyz|info|biz|edu|gov)[^\s]*|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
   let lastIndex = 0;
   let match;
 
-  while ((match = urlRegex.exec(line)) !== null) {
+  while ((match = linkRegex.exec(line)) !== null) {
     if (match.index > lastIndex) {
       tokens.push({ text: line.slice(lastIndex, match.index), type: "text" });
     }
     tokens.push({ text: match[1], type: "link" });
-    lastIndex = urlRegex.lastIndex;
+    lastIndex = linkRegex.lastIndex;
   }
 
   if (lastIndex < line.length) {
