@@ -88,6 +88,35 @@ body {
   max-width: 60ch;
 }
 
+/* Screenplay line types - hide indentation spaces, use CSS for positioning */
+.editor .content.mode-screenplay .line-character:not(.active) {
+  text-align: center;
+}
+
+.editor .content.mode-screenplay .line-character:not(.active) .indent-space {
+  display: none;
+}
+
+.editor .content.mode-screenplay .line-dialogue:not(.active) {
+  text-align: center;
+}
+
+.editor .content.mode-screenplay .line-dialogue:not(.active) .indent-space {
+  display: none;
+}
+
+.editor .content.mode-screenplay .line-parenthetical:not(.active) {
+  text-align: center;
+}
+
+.editor .content.mode-screenplay .line-parenthetical:not(.active) .indent-space {
+  display: none;
+}
+
+.editor .content.mode-screenplay .line-transition:not(.active) {
+  text-align: right;
+}
+
 .editor .line {
   display: block;
   min-height: 1.6em;

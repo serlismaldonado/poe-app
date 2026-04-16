@@ -47,11 +47,28 @@ export class DOMRenderer implements IRenderer {
     return state.lines
       .map((line, lineNum) => {
         const isCurrentLine = lineNum === state.cursorLine;
-        const lineClass = isCurrentLine ? "line active" : "line";
+        const elementType = mode === "screenplay" ? this.getLineElementType(line) : "";
+        const lineClass = `line${isCurrentLine ? " active" : ""}${elementType ? " " + elementType : ""}`;
         const content = this.renderLine(line, lineNum, state, mode);
         return `<div class="${lineClass}" data-line="${lineNum}">${content}</div>`;
       })
       .join("");
+  }
+
+  private getLineElementType(line: string): string {
+    const ind = line.match(/^ */)?.[0].length || 0;
+    const trimmed = line.trimStart();
+
+    if (ind === 0 && /^(INT\.|EXT\.|INT\/EXT|I\/E)/i.test(trimmed)) {
+      return "line-scene";
+    }
+    if (ind === 0 && /^(CUT TO:|FADE OUT|FADE IN|DISSOLVE TO|SMASH CUT)/i.test(trimmed)) {
+      return "line-transition";
+    }
+    if (ind >= 20) return "line-character";
+    if (ind >= 14) return "line-parenthetical";
+    if (ind >= 8) return "line-dialogue";
+    return "line-action";
   }
 
   private renderLine(
@@ -65,6 +82,9 @@ export class DOMRenderer implements IRenderer {
     let charOffset = 0;
     const isCurrentLine = lineNum === state.cursorLine;
 
+    // Calcular indentación para screenplay
+    const lineIndent = line.match(/^ */)?.[0].length || 0;
+    
     for (const token of tokens) {
       for (let i = 0; i < token.text.length; i++) {
         const char = token.text[i];
@@ -77,6 +97,11 @@ export class DOMRenderer implements IRenderer {
         if (isCursor) className += " cursor";
         if (isSelected) className += " selected";
         if (isSearchMatch) className += " search-match";
+        
+        // Marcar espacios de indentación en screenplay
+        if (mode === "screenplay" && col < lineIndent && char === " ") {
+          className += " indent-space";
+        }
 
         // Focus mode: fade non-active lines (but not scene headings/characters in screenplay)
         if (!isCurrentLine && !state.selectionStart && mode === "screenplay") {
